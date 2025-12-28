@@ -1,0 +1,327 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+// User model for authentication and user data
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  emailVerified DateTime?
+  passwordHash  String?
+  firstName     String
+  lastName      String
+  pesel         String?   @unique
+  phone         String?
+  address       String?
+  city          String?
+  postalCode    String?
+  country       String?   @default("Poland")
+  role          Role      @default(USER)
+  image         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  accounts Account[]
+  sessions Session[]
+  bids     Bid[]
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// Auction model for car auctions
+model Auction {
+  id               String        @id @default(cuid())
+  title            String
+  description      String?
+  vin              String        // Vehicle Identification Number (Chassis-Nr.)
+  referenceNumber  String        @unique
+
+  // Vehicle details
+  make             String
+  model            String
+  variant          String?       // Vehicle variant/trim (e.g., "AMG Line", "S Line")
+  year             Int
+  mileage          Int
+  color            String?
+  colorType        String?       // e.g., "metallic", "solid", "2-layer"
+  interiorColor    String?       // Interior color
+  engineSize       Int?          // in cc (Hubraum)
+  enginePower      Int?          // in HP
+  fuelType         FuelType      @default(PETROL)
+  transmission     Transmission  @default(MANUAL)
+  driveType        String?       // e.g., "FWD", "RWD", "AWD", "4x4"
+  bodyType         String        // flexible body type
+  condition        Condition     @default(GOOD)
+  doors            Int?
+  seats            Int?          // Number of seats
+  location         String?       // Vehicle location
+  country          String?       // Country of origin (e.g., "Switzerland", "Germany")
+
+  // Registration and inspection
+  firstRegistrationDate DateTime? // First registration date (Erste Inverkehrsetzung)
+  lastInspectionDate    DateTime? // Last inspection date (Letzte MFK)
+  typeApproval          String?   // Type approval number (Typenschein)
+
+  // Pricing
+  startingPrice    Float
+  suggestedValue   Float?        // AI-calculated market value
+  currentPrice     Float
+  reservePrice     Float?
+  repairCost       Float?        // Estimated repair cost (Reparaturkosten)
+  originalPrice    Float?        // Original new price (Neupreis)
+  currentMarketValue Float?      // Current market value (Zeitwert)
+
+  // Equipment and features
+  equipment        String?       // JSON array stored as string
+
+  // Damage information
+  damageDescription String?
+  damageLocations   String?      // JSON array stored as string (front, rear, left, right, top, bottom)
+  damageNumber      String?      // Insurance damage reference (Schaden-Nr.)
+  airbags           Int?         // Number of airbags triggered
+  defects           String?      // JSON array of defects (motor, transmission, axles, etc.)
+
+  // Vehicle history
+  serviceHistory    String?      // Service history notes
+  previousOwners    Int?         // Number of previous owners
+  accidentFree      Boolean?     // Whether the vehicle is accident-free
+  tireCondition     String?      // Tire condition description
+
+  // Images
+  images           String?       // JSON array of image URLs
+
+  // Source information
+  source           String?       // e.g., "Insurance", "Fleet", "Private"
+  sourceType       SourceType    @default(INSURANCE)
+  insuranceCompany String?       // Insurance company name if from insurance
+
+  // Auction timing
+  startDate        DateTime      @default(now())
+  endDate          DateTime
+
+  // Status
+  status           AuctionStatus @default(DRAFT)
+  vehicleType      VehicleType   @default(CAR)
+
+  // Timestamps
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+
+  // Relations
+  bids             Bid[]
+}
+
+// Bid model for auction bids
+model Bid {
+  id          String   @id @default(cuid())
+  amount      Float
+  auctionId   String
+  userId      String
+  createdAt   DateTime @default(now())
+  
+  auction     Auction  @relation(fields: [auctionId], references: [id], onDelete: Cascade)
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@index([auctionId])
+  @@index([userId])
+}
+
+// Enums
+enum Role {
+  USER
+  ADMIN
+}
+
+enum AuctionStatus {
+  DRAFT
+  ACTIVE
+  ENDED
+  SOLD
+  CANCELLED
+}
+
+enum VehicleType {
+  CAR
+  MOTORCYCLE
+  TRUCK
+  BICYCLE
+  OTHER
+}
+
+enum FuelType {
+  PETROL
+  DIESEL
+  ELECTRIC
+  HYBRID
+  LPG
+  CNG
+  OTHER
+}
+
+enum Transmission {
+  MANUAL
+  AUTOMATIC
+  SEMI_AUTO
+}
+
+enum Condition {
+  EXCELLENT
+  GOOD
+  FAIR
+  POOR
+  DAMAGED
+  SALVAGE
+}
+
+enum SourceType {
+  INSURANCE
+  DEALER
+  FLEET
+  PRIVATE
+  LEASING
+  RENTAL
+  GOVERNMENT
+  OTHER
+}
+
+// ============================================
+// SCRAPER IMPORT MODELS
+// ============================================
+
+// Scraped auction from external crawler (e.g., IVO/Informex)
+model ScrapedAuction {
+  id              String         @id @default(cuid())
+  externalId      String         @unique  // External reference (e.g., "BE250937664")
+  source          String         @default("IVO")  // Source platform
+
+  // FREE data from list scrape
+  brand           String
+  model           String
+  year            Int?
+  mileage         Int?
+  fuelType        String?
+  power           Int?           // in kW
+  engineCc        Int?           // Engine displacement in cc
+  co2             Int?           // CO2 emissions in g/km
+  location        String?        // Vehicle location
+  locationAddress String?
+  locationCity    String?
+  locationCountry String?
+  thumbnailUrl    String?
+  expirationDate  DateTime?      // Auction expiration
+  status          String?        // Vehicle status (e.g., "Technische keuring")
+
+  // PAID data from detail scrape
+  vin             String?        // VIN number (from paid detail)
+  images          String?        // JSON array of image URLs
+  detailData      String?        // Full detail JSON
+
+  // Selection workflow
+  selectionStatus ScrapedStatus  @default(PENDING)
+  selectedAt      DateTime?
+  selectedBy      String?        // User ID who selected
+
+  // Import tracking
+  detailFetchedAt DateTime?      // When detail was fetched (PAID)
+  detailCost      Float?         // Cost of fetching detail
+  importedAt      DateTime?      // When imported as auction
+  importedAuctionId String?      // Links to Auction.id after import
+
+  // Scrape job reference
+  scrapeJobId     String?
+  scrapeJob       ScrapeJob?     @relation(fields: [scrapeJobId], references: [id])
+
+  // Raw data
+  rawListData     String?        // Original JSON from list scrape
+  rawDetailData   String?        // Original JSON from detail scrape
+
+  // Timestamps
+  firstSeenAt     DateTime       @default(now())
+  lastUpdatedAt   DateTime       @updatedAt
+
+  @@index([selectionStatus])
+  @@index([brand])
+  @@index([year])
+}
+
+// Scrape job for tracking batch detail fetches
+model ScrapeJob {
+  id            String      @id @default(cuid())
+  status        JobStatus   @default(PENDING)
+
+  // Job details
+  auctionCount  Int         // Number of auctions to fetch
+  estimatedCost Float       // Estimated cost in EUR
+  actualCost    Float?      // Actual cost after completion
+
+  // Execution
+  startedAt     DateTime?
+  completedAt   DateTime?
+  progress      Int         @default(0)  // Number completed
+  error         String?     // Error message if failed
+
+  // Audit
+  createdBy     String      // User ID who created
+  createdAt     DateTime    @default(now())
+
+  // Relations
+  auctions      ScrapedAuction[]
+}
+
+enum ScrapedStatus {
+  PENDING      // New, not reviewed
+  SELECTED     // Admin selected for detail fetch
+  FETCHING     // Currently fetching detail
+  FETCHED      // Detail fetched successfully
+  IMPORTED     // Imported as auction
+  SKIPPED      // Admin skipped
+  ERROR        // Error during fetch
+}
+
+enum JobStatus {
+  PENDING
+  RUNNING
+  COMPLETED
+  FAILED
+  CANCELLED
+}

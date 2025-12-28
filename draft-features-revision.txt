@@ -1,0 +1,72 @@
+First: Think about a cool name for the site
+
+
+0.20 cents to enter to the details of the car
+
+overview needs to be obtained via crawler
+
+images is a dynamically generated url
+
+
+
+
+Vehicle Information
+
+Brand:
+Model:
+Type:
+VIN:
+Production Year:
+Mileage:
+
+Power: 100 kW
+Engine Capacity: 1995 cc
+Fuel Type: Petrol
+
+Vehicle Location
+
+Inspection Location:
+GRIPSHI – WE FIX AUTOS
+Bredabaan 105
+2170 Merksem
+Belgium
+
+Vehicle Photos
+
+📷 Photos available (see gallery)
+
+Documents Included
+
+✔ Vehicle Registration Certificate
+✔ Certificate of Conformity
+✔ Technical Inspection Certificate
+✔ Chassis Authenticity Certificate
+✔ LPG Certificate
+✔ Service / Maintenance Book
+✔ Radio Code
+✔ Keys: 1
+✘ Remote Control: 0
+
+
+
+How to obtain the ends in ?????
+
+
+Bid should only appear only when logged it.
+Bid history should not be visible
+There shouldn't be information about the other bids, Current price should not exist, but maybe should be replaced for your bid. 
+Bid are done without the information of other bids.
+
+
+
+
+Registration should have an email validation.
+Admins should have an email and owner should have an email of confirmation
+
+Log out is not working !!!!
+
+
+
+
+
+
