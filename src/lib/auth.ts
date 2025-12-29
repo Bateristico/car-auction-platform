@@ -71,6 +71,18 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     }),
   ],
   callbacks: {
+    async redirect({ url, baseUrl }) {
+      // If the url is relative, prepend the base URL
+      if (url.startsWith("/")) {
+        return `${baseUrl}${url}`
+      }
+      // If the url is on the same origin, allow it
+      if (new URL(url).origin === baseUrl) {
+        return url
+      }
+      // Default to base URL
+      return baseUrl
+    },
     async jwt({ token, user }) {
       if (user) {
         token.id = user.id ?? ""
