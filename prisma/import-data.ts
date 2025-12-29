@@ -103,8 +103,8 @@ async function main() {
           scrapeJobId: auction.scrapeJobId,
           rawListData: auction.rawListData,
           rawDetailData: auction.rawDetailData,
-          firstSeenAt: auction.firstSeenAt ? new Date(auction.firstSeenAt) : null,
-          lastUpdatedAt: auction.lastUpdatedAt ? new Date(auction.lastUpdatedAt) : null,
+          firstSeenAt: auction.firstSeenAt ? new Date(auction.firstSeenAt) : undefined,
+          lastUpdatedAt: auction.lastUpdatedAt ? new Date(auction.lastUpdatedAt) : undefined,
         },
         update: {},
       })
