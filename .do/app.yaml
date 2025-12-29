@@ -43,10 +43,13 @@ services:
       - key: DATABASE_URL
         value: "file:/app/data/prod.db"
 
-      # NextAuth - URL will be set automatically
+      # NextAuth configuration
       - key: NEXTAUTH_URL
         scope: RUN_TIME
         value: ${APP_URL}
+
+      - key: AUTH_TRUST_HOST
+        value: "true"
 
       # Secrets - Configure these in DigitalOcean dashboard
       - key: NEXTAUTH_SECRET
