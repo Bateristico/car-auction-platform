@@ -1,9 +1,21 @@
 import { Resend } from "resend"
 
-const resend = new Resend(process.env.RESEND_API_KEY)
+// Lazy initialization to avoid build-time errors
+let resendClient: Resend | null = null
 
-const NOTIFICATION_EMAIL = process.env.NOTIFICATION_EMAIL || "camilo.saa@gmail.com"
-const FROM_EMAIL = process.env.FROM_EMAIL || "CarAuction <onboarding@resend.dev>"
+function getResendClient(): Resend {
+  if (!resendClient) {
+    const apiKey = process.env.RESEND_API_KEY
+    if (!apiKey) {
+      throw new Error("RESEND_API_KEY environment variable is not set")
+    }
+    resendClient = new Resend(apiKey)
+  }
+  return resendClient
+}
+
+const NOTIFICATION_EMAIL = process.env.NOTIFICATION_EMAIL || "notifications@novadrivemotors.pl"
+const FROM_EMAIL = process.env.FROM_EMAIL || "NovaDrive Motors <onboarding@resend.dev>"
 
 interface BidNotificationParams {
   bidAmount: number
@@ -82,7 +94,7 @@ export async function sendBidNotification({
   `
 
   try {
-    const { data, error } = await resend.emails.send({
+    const { data, error } = await getResendClient().emails.send({
       from: FROM_EMAIL,
       to: [NOTIFICATION_EMAIL],
       subject,
@@ -143,7 +155,7 @@ export async function sendVerificationEmail(email: string, token: string) {
   `
 
   try {
-    const { data, error } = await resend.emails.send({
+    const { data, error } = await getResendClient().emails.send({
       from: FROM_EMAIL,
       to: [email],
       subject,
