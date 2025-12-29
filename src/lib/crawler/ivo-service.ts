@@ -53,10 +53,27 @@ export class IvoService {
 
     crawlerLogger.info("Initializing IVO service...")
 
-    this.browser = await chromium.launch({
-      headless: crawlerConfig.browser.headless,
-      slowMo: crawlerConfig.browser.slowMo,
-    })
+    try {
+      this.browser = await chromium.launch({
+        headless: crawlerConfig.browser.headless,
+        slowMo: crawlerConfig.browser.slowMo,
+      })
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : String(error)
+
+      // Check if this is a browser not installed error
+      if (errorMessage.includes("Executable doesn't exist") ||
+          errorMessage.includes("browserType.launch") ||
+          errorMessage.includes("chrome-headless-shell")) {
+        throw new Error(
+          "Crawler feature unavailable: Playwright browser is not installed in this environment. " +
+          "This feature requires a local development setup with Playwright browsers installed. " +
+          "Run 'npx playwright install chromium' locally to enable crawling."
+        )
+      }
+
+      throw error
+    }
 
     // Try to load saved IVO auth state first
     const ivoAuthPath = crawlerConfig.paths.ivoAuthState

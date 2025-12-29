@@ -4,8 +4,8 @@
 # Multi-stage build for optimized production image
 
 # Stage 1: Dependencies
-FROM node:20-alpine AS deps
-RUN apk add --no-cache libc6-compat python3 make g++
+FROM node:20-slim AS deps
+RUN apt-get update && apt-get install -y python3 make g++ && rm -rf /var/lib/apt/lists/*
 WORKDIR /app
 
 # Copy package files
@@ -15,7 +15,7 @@ COPY package.json package-lock.json* ./
 RUN npm ci --legacy-peer-deps
 
 # Stage 2: Builder
-FROM node:20-alpine AS builder
+FROM node:20-slim AS builder
 WORKDIR /app
 
 # Copy dependencies from deps stage
@@ -28,6 +28,9 @@ ENV NODE_ENV=production
 
 # Generate Prisma client
 RUN npx prisma generate
+
+# Install Playwright Chromium browser (for crawler feature)
+RUN npx playwright install chromium --with-deps
 
 # Create empty database for build (Next.js static generation needs it)
 # Use --url flag to override any environment variable from build platform
@@ -45,7 +48,7 @@ RUN rm -f ./prisma/build.db
 ENV DATABASE_URL=""
 
 # Stage 3: Production Runner
-FROM node:20-alpine AS runner
+FROM node:20-slim AS runner
 WORKDIR /app
 
 # Set production environment
@@ -54,8 +57,16 @@ ENV NEXT_TELEMETRY_DISABLED=1
 ENV AUTH_TRUST_HOST=true
 
 # Create non-root user for security
-RUN addgroup --system --gid 1001 nodejs
-RUN adduser --system --uid 1001 nextjs
+RUN groupadd --system --gid 1001 nodejs && useradd --system --uid 1001 --gid nodejs nextjs
+
+# Install Chromium runtime dependencies and wget for healthcheck
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libnss3 libnspr4 libatk1.0-0 libatk-bridge2.0-0 libcups2 libdrm2 \
+    libxkbcommon0 libxcomposite1 libxdamage1 libxfixes3 libxrandr2 \
+    libgbm1 libasound2 libpango-1.0-0 libcairo2 libx11-6 libx11-xcb1 \
+    libxcb1 libxext6 libxcursor1 libxi6 libxtst6 libglib2.0-0 \
+    wget ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
 
 # Copy public assets
 COPY --from=builder /app/public ./public
@@ -84,6 +95,11 @@ RUN chmod +x docker-entrypoint.sh
 
 # Create data directory for SQLite
 RUN mkdir -p /app/data && chown -R nextjs:nodejs /app/data
+
+# Copy Playwright browser from builder and set ownership
+RUN mkdir -p /home/nextjs/.cache
+COPY --from=builder /root/.cache/ms-playwright /home/nextjs/.cache/ms-playwright
+RUN chown -R nextjs:nodejs /home/nextjs
 
 # Switch to non-root user
 USER nextjs
