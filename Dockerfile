@@ -29,8 +29,15 @@ ENV NODE_ENV=production
 # Generate Prisma client
 RUN npx prisma generate
 
+# Create empty database for build (Next.js static generation needs it)
+ENV DATABASE_URL="file:./prisma/build.db"
+RUN npx prisma db push --skip-generate
+
 # Build the application
 RUN npm run build
+
+# Remove build database (will use runtime database)
+RUN rm -f ./prisma/build.db
 
 # Stage 3: Production Runner
 FROM node:20-alpine AS runner
