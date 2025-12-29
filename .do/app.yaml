@@ -43,7 +43,11 @@ services:
       - key: DATABASE_URL
         value: "file:/app/data/prod.db"
 
-      # NextAuth configuration
+      # NextAuth configuration (Auth.js v5 uses AUTH_URL)
+      - key: AUTH_URL
+        scope: RUN_TIME
+        value: ${APP_URL}
+
       - key: NEXTAUTH_URL
         scope: RUN_TIME
         value: ${APP_URL}

@@ -1,6 +1,9 @@
 import { Suspense } from "react"
 import { getTranslations, setRequestLocale } from "next-intl/server"
 import { prisma } from "@/lib/prisma"
+
+// Force dynamic rendering to always fetch fresh data
+export const dynamic = "force-dynamic"
 import { AuctionFilters } from "./auction-filters"
 import { AuctionGrid } from "./auction-grid"
 import { Loader2 } from "lucide-react"

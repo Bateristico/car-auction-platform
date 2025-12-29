@@ -1,6 +1,9 @@
 import { getTranslations, setRequestLocale } from "next-intl/server"
 import { Link } from "@/i18n/navigation"
 import { prisma } from "@/lib/prisma"
+
+// Force dynamic rendering to always fetch fresh data
+export const dynamic = "force-dynamic"
 import { Button } from "@/components/ui/button"
 import { AuctionCard } from "@/components/auctions/auction-card"
 import { HeroButtons } from "@/components/home/hero-buttons"
