@@ -30,14 +30,16 @@ ENV NODE_ENV=production
 RUN npx prisma generate
 
 # Create empty database for build (Next.js static generation needs it)
-ENV DATABASE_URL="file:./prisma/build.db"
-RUN npx prisma db push --skip-generate
+# Use --url flag to override any environment variable from build platform
+RUN npx prisma db push --url="file:./prisma/build.db" --accept-data-loss
 
-# Build the application
+# Build the application with build database
+ENV DATABASE_URL="file:./prisma/build.db"
 RUN npm run build
 
 # Remove build database (will use runtime database)
 RUN rm -f ./prisma/build.db
+ENV DATABASE_URL=""
 
 # Stage 3: Production Runner
 FROM node:20-alpine AS runner
