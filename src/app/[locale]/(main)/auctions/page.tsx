@@ -51,6 +51,8 @@ async function getAuctions(searchParams: SearchParams) {
 
   const where: any = {
     status: "ACTIVE",
+    // Only show auctions that haven't ended yet (filter out ended auctions from listing)
+    endDate: { gt: new Date() },
   }
 
   if (search) {

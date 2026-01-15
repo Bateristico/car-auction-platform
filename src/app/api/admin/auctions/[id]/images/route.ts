@@ -1,7 +1,25 @@
 import { NextRequest, NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
-import { parseImages, serializeImages } from "@/lib/image-utils"
+import { serializeImages } from "@/lib/image-utils"
+
+// List of allowed image URL patterns for security
+const ALLOWED_PATTERNS = [
+  /^\/auction-images\//, // Local auction images
+  /^https?:\/\/[^/]+\.cloudinary\.com\//, // Cloudinary CDN
+  /^https?:\/\/images\.unsplash\.com\//, // Unsplash
+  /^https?:\/\/[^/]+\.unsplash\.com\//, // Unsplash variants
+  /^https?:\/\/auta\.ch\//, // auta.ch images
+  /^https?:\/\/res\.cloudinary\.com\//, // Cloudinary res
+]
+
+function isAllowedImageUrl(url: string): boolean {
+  // Basic URL validation
+  if (!url || typeof url !== "string") return false
+
+  // Check against allowed patterns
+  return ALLOWED_PATTERNS.some((pattern) => pattern.test(url))
+}
 
 export async function PATCH(
   request: NextRequest,
@@ -48,31 +66,28 @@ export async function PATCH(
       )
     }
 
-    // Parse existing images
-    const existingImages = parseImages(existing.images)
-
-    // Validate that all provided URLs exist in current images (prevent injection)
-    const existingSet = new Set(existingImages)
     const newImages = data.images as string[]
 
+    // Validate all URLs are allowed (prevents arbitrary URL injection)
     for (const url of newImages) {
-      if (!existingSet.has(url)) {
+      if (!isAllowedImageUrl(url)) {
         return NextResponse.json(
-          { error: "Invalid image URL - not in existing images" },
+          { error: `Image URL not allowed: ${url.substring(0, 50)}...` },
           { status: 400 }
         )
       }
     }
 
-    // Validate that all existing images are present (no removals)
-    if (newImages.length !== existingImages.length) {
+    // Validate no duplicates
+    const uniqueImages = [...new Set(newImages)]
+    if (uniqueImages.length !== newImages.length) {
       return NextResponse.json(
-        { error: "Image count mismatch - reorder only, no additions or deletions" },
+        { error: "Duplicate image URLs detected" },
         { status: 400 }
       )
     }
 
-    // Update auction with new image order
+    // Update auction with new images (reorder, add, or remove)
     const auction = await prisma.auction.update({
       where: { id },
       data: {

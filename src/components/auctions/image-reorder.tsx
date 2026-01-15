@@ -23,8 +23,9 @@ import Image from "next/image"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { SortableImage } from "./sortable-image"
-import { parseImages, getProxiedImageUrl } from "@/lib/image-utils"
-import { Images, Save, Loader2, ImageIcon } from "lucide-react"
+import { parseImages, getProxiedImageUrl, IMAGE_CROP_CONFIG } from "@/lib/image-utils"
+import { Input } from "@/components/ui/input"
+import { Images, Save, Loader2, ImageIcon, Plus, Trash2 } from "lucide-react"
 
 interface ImageReorderProps {
   imagesJson: string | null
@@ -39,6 +40,8 @@ export function ImageReorder({ imagesJson, auctionId }: ImageReorderProps) {
   const [saving, setSaving] = useState(false)
   const [hasChanges, setHasChanges] = useState(false)
   const [saveMessage, setSaveMessage] = useState<string | null>(null)
+  const [newImageUrl, setNewImageUrl] = useState("")
+  const [addError, setAddError] = useState<string | null>(null)
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -66,6 +69,48 @@ export function ImageReorder({ imagesJson, auctionId }: ImageReorderProps) {
 
     setActiveId(null)
   }, [])
+
+  const handleDeleteImage = useCallback((url: string) => {
+    setImages((items) => {
+      const newItems = items.filter((item) => item !== url)
+      setHasChanges(true)
+      return newItems
+    })
+  }, [])
+
+  const handleAddImage = useCallback(() => {
+    setAddError(null)
+
+    // Validate URL
+    const url = newImageUrl.trim()
+    if (!url) {
+      setAddError("Please enter a URL")
+      return
+    }
+
+    // Basic URL validation
+    try {
+      // Allow relative URLs starting with /
+      if (!url.startsWith("/")) {
+        new URL(url)
+      }
+    } catch {
+      setAddError("Invalid URL format")
+      return
+    }
+
+    // Check for duplicates
+    if (images.includes(url)) {
+      setAddError("This image is already added")
+      return
+    }
+
+    setImages((items) => {
+      setHasChanges(true)
+      return [...items, url]
+    })
+    setNewImageUrl("")
+  }, [newImageUrl, images])
 
   const handleSave = async () => {
     setSaving(true)
@@ -134,7 +179,13 @@ export function ImageReorder({ imagesJson, auctionId }: ImageReorderProps) {
           <SortableContext items={images} strategy={rectSortingStrategy}>
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
               {images.map((url, index) => (
-                <SortableImage key={url} id={url} url={url} index={index} />
+                <SortableImage
+                  key={url}
+                  id={url}
+                  url={url}
+                  index={index}
+                  onDelete={handleDeleteImage}
+                />
               ))}
             </div>
           </SortableContext>
@@ -147,6 +198,11 @@ export function ImageReorder({ imagesJson, auctionId }: ImageReorderProps) {
                   alt="Dragging"
                   fill
                   className="object-cover"
+                  style={{
+                    objectPosition: IMAGE_CROP_CONFIG.objectPosition,
+                    transform: `scale(1.${IMAGE_CROP_CONFIG.cropBottomPercent.toString().padStart(2, '0')})`,
+                    transformOrigin: 'top center'
+                  }}
                   unoptimized={activeImage.unoptimized}
                 />
               </div>
@@ -154,7 +210,37 @@ export function ImageReorder({ imagesJson, auctionId }: ImageReorderProps) {
           </DragOverlay>
         </DndContext>
 
-        <div className="flex items-center gap-4">
+        {/* Add new image URL section */}
+        <div className="pt-4 border-t">
+          <p className="text-sm text-muted-foreground mb-2">{t("addImageUrl") || "Add image by URL"}</p>
+          <div className="flex gap-2">
+            <Input
+              type="text"
+              placeholder="https://example.com/image.jpg or /auction-images/..."
+              value={newImageUrl}
+              onChange={(e) => {
+                setNewImageUrl(e.target.value)
+                setAddError(null)
+              }}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault()
+                  handleAddImage()
+                }
+              }}
+              className="flex-1"
+            />
+            <Button onClick={handleAddImage} variant="outline">
+              <Plus className="h-4 w-4 mr-2" />
+              {t("add") || "Add"}
+            </Button>
+          </div>
+          {addError && (
+            <p className="text-sm text-destructive mt-1">{addError}</p>
+          )}
+        </div>
+
+        <div className="flex items-center gap-4 pt-4">
           <Button
             onClick={handleSave}
             disabled={!hasChanges || saving}

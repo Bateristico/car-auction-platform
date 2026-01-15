@@ -1,4 +1,15 @@
 /**
+ * Image cropping configuration to hide watermarks
+ * The crop percentage removes the bottom portion of images where watermarks typically appear
+ */
+export const IMAGE_CROP_CONFIG = {
+  // Percentage of the image height to crop from the bottom (0-100)
+  cropBottomPercent: 8,
+  // CSS object-position value to align image to top when cropping
+  objectPosition: "top",
+}
+
+/**
  * Image info with URL and whether it needs to bypass Next.js image optimization
  */
 export interface ImageInfo {
