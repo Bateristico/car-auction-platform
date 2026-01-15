@@ -9,6 +9,8 @@ import { NextRequest, NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 import { crawlerLogger } from "@/lib/crawler/logger"
+import fs from "fs"
+import path from "path"
 
 // Map scraped fuel type string to Prisma FuelType enum
 function mapFuelType(fuelType: string | null): "PETROL" | "DIESEL" | "ELECTRIC" | "HYBRID" | "LPG" | "CNG" | "OTHER" {
@@ -57,6 +59,60 @@ function generateMockPrice(year: number | null, mileage: number | null, brand: s
 
   const price = basePrice * yearFactor * mileageFactor * brandFactor
   return Math.round(price / 100) * 100 // Round to nearest 100
+}
+
+/**
+ * Migrate image folder from external ID to internal auction ID
+ * This removes the informex auction ID from public image URLs
+ */
+function migrateImageFolder(externalId: string, internalId: string): string | null {
+  const imagesBaseDir = path.join(process.cwd(), "public", "auction-images")
+  const sourceDir = path.join(imagesBaseDir, externalId)
+  const targetDir = path.join(imagesBaseDir, internalId)
+
+  // Check if source directory exists
+  if (!fs.existsSync(sourceDir)) {
+    return null // No images to migrate
+  }
+
+  // If target already exists (shouldn't happen), skip migration
+  if (fs.existsSync(targetDir)) {
+    crawlerLogger.warn(`Target directory ${targetDir} already exists, skipping migration`)
+    return null
+  }
+
+  try {
+    // Rename the directory
+    fs.renameSync(sourceDir, targetDir)
+    crawlerLogger.info(`Migrated images from ${externalId} to ${internalId}`)
+    return internalId
+  } catch (err) {
+    crawlerLogger.error(`Failed to migrate images from ${externalId} to ${internalId}:`, err)
+    return null
+  }
+}
+
+/**
+ * Update image paths in the JSON string to use the new auction ID
+ */
+function updateImagePaths(imagesJson: string | null, oldId: string, newId: string): string | null {
+  if (!imagesJson) return null
+
+  try {
+    const images = JSON.parse(imagesJson)
+    if (!Array.isArray(images)) return imagesJson
+
+    const updatedImages = images.map((url: string) => {
+      if (typeof url === "string" && url.includes(`/auction-images/${oldId}/`)) {
+        return url.replace(`/auction-images/${oldId}/`, `/auction-images/${newId}/`)
+      }
+      return url
+    })
+
+    return JSON.stringify(updatedImages)
+  } catch {
+    return imagesJson
+  }
 }
 
 // Map body type from model name hints
@@ -171,11 +227,11 @@ export async function POST(request: NextRequest) {
         const bodyType = guessBodyType(scraped.model)
         const condition = guessCondition(scraped.mileage)
 
-        // Create the Auction record
+        // Create the Auction record (initially without images to get the ID)
         const auction = await prisma.auction.create({
           data: {
             title: `${scraped.brand} ${scraped.model}${scraped.year ? ` (${scraped.year})` : ""}`,
-            referenceNumber: scraped.externalId,
+            referenceNumber: `CA-${Date.now().toString(36).toUpperCase()}`, // Generate internal reference instead of using external ID
             vin: mockVin,
             make: scraped.brand,
             model: scraped.model,
@@ -191,7 +247,7 @@ export async function POST(request: NextRequest) {
             startingPrice: mockPrice,
             currentPrice: mockPrice,
             suggestedValue: Math.round(mockPrice * 1.15), // Mock AI value slightly higher
-            images: scraped.images, // Already JSON string
+            images: scraped.images, // Initially use original paths
             source: scraped.source,
             sourceType: "INSURANCE",
             startDate: new Date(),
@@ -199,6 +255,19 @@ export async function POST(request: NextRequest) {
             status: "ACTIVE", // Make it visible on grid immediately
           },
         })
+
+        // Migrate image folder from external ID to internal auction ID (removes informex ID from URLs)
+        const migrated = migrateImageFolder(scraped.externalId, auction.id)
+        if (migrated) {
+          // Update image paths in database to use the new internal ID
+          const updatedImages = updateImagePaths(scraped.images, scraped.externalId, auction.id)
+          if (updatedImages) {
+            await prisma.auction.update({
+              where: { id: auction.id },
+              data: { images: updatedImages },
+            })
+          }
+        }
 
         // Update scraped auction to mark as imported
         await prisma.scrapedAuction.update({

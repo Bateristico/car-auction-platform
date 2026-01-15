@@ -8,7 +8,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Calendar, Gauge, Clock, Hash } from "lucide-react"
 import { differenceInSeconds } from "date-fns"
-import { getFirstImage } from "@/lib/image-utils"
+import { getFirstImage, IMAGE_CROP_CONFIG } from "@/lib/image-utils"
 
 interface AuctionCardProps {
   auction: {
@@ -71,12 +71,17 @@ export function AuctionCard({ auction }: AuctionCardProps) {
   return (
     <Link href={`/auctions/${auction.id}`}>
       <Card className="overflow-hidden hover:shadow-lg transition-shadow cursor-pointer h-full">
-        <div className="relative aspect-[4/3] bg-muted">
+        <div className="relative aspect-[4/3] bg-muted overflow-hidden">
           <Image
             src={primaryImage.url}
             alt={auction.title}
             fill
             className="object-cover"
+            style={{
+              objectPosition: IMAGE_CROP_CONFIG.objectPosition,
+              transform: `scale(1.${IMAGE_CROP_CONFIG.cropBottomPercent.toString().padStart(2, '0')})`,
+              transformOrigin: 'top center'
+            }}
             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
             unoptimized={primaryImage.unoptimized}
           />

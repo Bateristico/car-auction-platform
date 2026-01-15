@@ -26,7 +26,7 @@ import {
   Gavel,
 } from "lucide-react"
 import { differenceInSeconds } from "date-fns"
-import { getAllImages, type ImageInfo } from "@/lib/image-utils"
+import { getAllImages, IMAGE_CROP_CONFIG, type ImageInfo } from "@/lib/image-utils"
 
 interface UserBid {
   id: string
@@ -208,7 +208,7 @@ export function AuctionDetail({ auction, userBid }: AuctionDetailProps) {
         <div className="lg:col-span-2 space-y-6">
           {/* Image gallery */}
           <Card className="overflow-hidden">
-            <div className="relative aspect-[16/10] bg-muted">
+            <div className="relative aspect-[16/10] bg-muted overflow-hidden">
               {images.length > 0 ? (
                 <>
                   <Image
@@ -216,6 +216,11 @@ export function AuctionDetail({ auction, userBid }: AuctionDetailProps) {
                     alt={`${auction.title} - Image ${currentImageIndex + 1}`}
                     fill
                     className="object-cover"
+                    style={{
+                      objectPosition: IMAGE_CROP_CONFIG.objectPosition,
+                      transform: `scale(1.${IMAGE_CROP_CONFIG.cropBottomPercent.toString().padStart(2, '0')})`,
+                      transformOrigin: 'top center'
+                    }}
                     priority
                     unoptimized={images[currentImageIndex].unoptimized}
                   />
@@ -276,6 +281,11 @@ export function AuctionDetail({ auction, userBid }: AuctionDetailProps) {
                         alt={`Thumbnail ${idx + 1}`}
                         fill
                         className="object-cover"
+                        style={{
+                          objectPosition: IMAGE_CROP_CONFIG.objectPosition,
+                          transform: `scale(1.${IMAGE_CROP_CONFIG.cropBottomPercent.toString().padStart(2, '0')})`,
+                          transformOrigin: 'top center'
+                        }}
                         unoptimized={img.unoptimized}
                       />
                     </button>
