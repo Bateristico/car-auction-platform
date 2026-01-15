@@ -1,6 +1,6 @@
-# NovaDrive Motors - Podręcznik Użytkownika
+# Samochody.be - Podręcznik Użytkownika
 
-Ten podręcznik zawiera instrukcje krok po kroku dotyczące korzystania z platformy aukcyjnej NovaDrive Motors. Postępuj zgodnie z tymi przewodnikami, aby nauczyć się licytować pojazdy, zarządzać aukcjami i korzystać z funkcji administracyjnych.
+Ten podręcznik zawiera instrukcje krok po kroku dotyczące korzystania z platformy aukcyjnej Samochody.be. Postępuj zgodnie z tymi przewodnikami, aby nauczyć się licytować pojazdy, zarządzać aukcjami i korzystać z funkcji administracyjnych.
 
 ---
 
@@ -18,7 +18,7 @@ Ten podręcznik zawiera instrukcje krok po kroku dotyczące korzystania z platfo
 
 ### Dostęp do Platformy
 
-Przejdź na stronę NovaDrive Motors, aby uzyskać dostęp do strony głównej.
+Przejdź na stronę Samochody.be, aby uzyskać dostęp do strony głównej.
 
 ![Strona Główna](img/01-home.png)
 
@@ -26,7 +26,7 @@ Strona główna wyświetla:
 - **Sekcja Hero**: Główne wezwanie do działania z przyciskami "Przeglądaj Aukcje" i "Utwórz Konto"
 - **Statystyki**: Liczniki aktywnych aukcji, użytkowników i ofert na żywo
 - **Wyróżnione Aukcje**: Pojazdy kończące się wkrótce
-- **Sekcja Korzyści**: Dlaczego warto wybrać NovaDrive Motors
+- **Sekcja Korzyści**: Dlaczego warto wybrać Samochody.be
 
 ### Tworzenie Konta
 
@@ -186,7 +186,7 @@ Uzyskaj dostęp do panelu użytkownika, aby śledzić całą swoją aktywność 
 
 ### Zrozumienie Ofert Zamkniętych
 
-NovaDrive Motors używa formatu **aukcji z ofertami zamkniętymi**:
+Samochody.be używa formatu **aukcji z ofertami zamkniętymi**:
 
 - Kwota Twojej oferty jest **prywatna** - inni licytujący jej nie widzą
 - Możesz zobaczyć tylko **swoją własną** ofertę
@@ -540,11 +540,11 @@ Przekształć pobrane pojazdy w aktywne aukcje.
 ### Kontakt z Pomocą Techniczną
 
 Jeśli napotkasz problemy:
-- **Email**: support@novadrivemotors.pl
+- **Email**: support@samochody.be
 - **Telefon**: +48 22 123 45 67
 - **Godziny pracy**: Pon-Pt 8:00-18:00, Sob 9:00-14:00
 
 ---
 
 *Ostatnia aktualizacja: Grudzień 2024*
-*NovaDrive Motors Sp. z o.o.*
+*Samochody.be Sp. z o.o.*

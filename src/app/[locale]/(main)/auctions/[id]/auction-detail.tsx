@@ -4,29 +4,40 @@ import { useState, useEffect } from "react"
 import Image from "next/image"
 import { useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
+import { useTranslations } from "next-intl"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Separator } from "@/components/ui/separator"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { LiveBadge } from "@/components/ui/live-badge"
+import { VerifiedBadge } from "@/components/ui/verified-badge"
+import { CountdownTimer } from "@/components/ui/countdown-timer"
+import { ImageLightbox } from "@/components/auctions/image-lightbox"
+import { QuickBidButtons } from "@/components/auctions/quick-bid-buttons"
 import {
-  Calendar,
-  Gauge,
-  Clock,
-  Hash,
-  Fuel,
-  Settings2,
-  Car,
-  MapPin,
-  Info,
-  AlertTriangle,
   ChevronLeft,
   ChevronRight,
+  Maximize2,
   Gavel,
+  AlertTriangle,
+  Car,
+  Calendar,
+  Gauge,
+  Fuel,
+  Settings2,
+  MapPin,
+  Hash,
+  Copy,
+  Check,
+  ArrowLeft,
+  TrendingUp,
+  ShieldCheck,
 } from "lucide-react"
 import { differenceInSeconds } from "date-fns"
 import { getAllImages, IMAGE_CROP_CONFIG, type ImageInfo } from "@/lib/image-utils"
+import { cn } from "@/lib/utils"
 
 interface UserBid {
   id: string
@@ -70,40 +81,25 @@ interface AuctionDetailProps {
   }
 }
 
-function formatCountdown(endDate: Date): { text: string; isUrgent: boolean } {
-  const now = new Date()
-  const diffSeconds = differenceInSeconds(endDate, now)
-
-  if (diffSeconds <= 0) return { text: "Auction Ended", isUrgent: false }
-
-  const days = Math.floor(diffSeconds / 86400)
-  const hours = Math.floor((diffSeconds % 86400) / 3600)
-  const minutes = Math.floor((diffSeconds % 3600) / 60)
-  const seconds = diffSeconds % 60
-
-  const isUrgent = diffSeconds < 3600 // Less than 1 hour
-
-  if (days > 0) {
-    return { text: `${days}d ${hours}h ${minutes}m ${seconds}s`, isUrgent }
-  }
-  if (hours > 0) {
-    return { text: `${hours}h ${minutes}m ${seconds}s`, isUrgent }
-  }
-  return { text: `${minutes}m ${seconds}s`, isUrgent }
-}
-
 export function AuctionDetail({ auction, userBid }: AuctionDetailProps) {
+  const t = useTranslations("auctions")
   const { data: session } = useSession()
   const router = useRouter()
   const [currentImageIndex, setCurrentImageIndex] = useState(0)
-  const [countdown, setCountdown] = useState({ text: "", isUrgent: false })
+  const [lightboxOpen, setLightboxOpen] = useState(false)
   const [bidAmount, setBidAmount] = useState("")
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [showVin, setShowVin] = useState(false)
+  const [vinCopied, setVinCopied] = useState(false)
 
   const endDate = new Date(auction.endDate)
   const isEnded = new Date() > endDate
   const images = getAllImages(auction.images)
+
+  // Check if auction is "live" (ending within 24 hours)
+  const hoursLeft = differenceInSeconds(endDate, new Date()) / 3600
+  const isLive = !isEnded && hoursLeft <= 24
+
   // For sealed bid: minimum is starting price, or user's previous bid + 100 if they already bid
   const minBid = userBid ? userBid.amount + 100 : auction.startingPrice
 
@@ -112,25 +108,23 @@ export function AuctionDetail({ auction, userBid }: AuctionDetailProps) {
     setShowVin(true)
   }, [])
 
-  // Countdown timer
-  useEffect(() => {
-    const targetDate = new Date(auction.endDate)
-    const updateCountdown = () => {
-      setCountdown(formatCountdown(targetDate))
-    }
-
-    updateCountdown()
-    const interval = setInterval(updateCountdown, 1000)
-
-    return () => clearInterval(interval)
-  }, [auction.endDate])
-
   const handlePrevImage = () => {
     setCurrentImageIndex((prev) => (prev === 0 ? images.length - 1 : prev - 1))
   }
 
   const handleNextImage = () => {
     setCurrentImageIndex((prev) => (prev === images.length - 1 ? 0 : prev + 1))
+  }
+
+  const copyVin = async () => {
+    await navigator.clipboard.writeText(auction.vin)
+    setVinCopied(true)
+    setTimeout(() => setVinCopied(false), 2000)
+  }
+
+  const handleQuickBid = (increment: number) => {
+    const currentAmount = bidAmount ? parseFloat(bidAmount) : minBid
+    setBidAmount(String(currentAmount + increment))
   }
 
   const handleBid = async () => {
@@ -191,438 +185,496 @@ export function AuctionDetail({ auction, userBid }: AuctionDetailProps) {
     SALVAGE: "Salvage",
   }
 
+  const conditionVariant = (condition: string) => {
+    if (condition === "EXCELLENT" || condition === "GOOD") return "trust"
+    if (condition === "DAMAGED" || condition === "SALVAGE") return "destructive"
+    return "secondary"
+  }
+
   return (
-    <div className="container py-8">
-      {/* Back button */}
-      <Button
-        variant="ghost"
-        className="mb-4"
-        onClick={() => router.push("/auctions")}
-      >
-        <ChevronLeft className="h-4 w-4 mr-2" />
-        Back to Auctions
-      </Button>
+    <div className="min-h-screen bg-background" data-testid="auction-detail">
+      {/* Lightbox */}
+      <ImageLightbox
+        images={images}
+        initialIndex={currentImageIndex}
+        open={lightboxOpen}
+        onOpenChange={setLightboxOpen}
+      />
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Left column - Images and details */}
-        <div className="lg:col-span-2 space-y-6">
-          {/* Image gallery */}
-          <Card className="overflow-hidden">
-            <div className="relative aspect-[16/10] bg-muted overflow-hidden">
-              {images.length > 0 ? (
-                <>
-                  <Image
-                    src={images[currentImageIndex].url}
-                    alt={`${auction.title} - Image ${currentImageIndex + 1}`}
-                    fill
-                    className="object-cover"
-                    style={{
-                      objectPosition: IMAGE_CROP_CONFIG.objectPosition,
-                      transform: `scale(1.${IMAGE_CROP_CONFIG.cropBottomPercent.toString().padStart(2, '0')})`,
-                      transformOrigin: 'top center'
-                    }}
-                    priority
-                    unoptimized={images[currentImageIndex].unoptimized}
-                  />
-                  {images.length > 1 && (
-                    <>
-                      <Button
-                        variant="secondary"
-                        size="icon"
-                        className="absolute left-4 top-1/2 -translate-y-1/2 bg-background/80 backdrop-blur-sm"
-                        onClick={handlePrevImage}
-                      >
-                        <ChevronLeft className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="secondary"
-                        size="icon"
-                        className="absolute right-4 top-1/2 -translate-y-1/2 bg-background/80 backdrop-blur-sm"
-                        onClick={handleNextImage}
-                      >
-                        <ChevronRight className="h-4 w-4" />
-                      </Button>
-                      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-background/80 backdrop-blur-sm px-3 py-1 rounded-full text-sm">
-                        {currentImageIndex + 1} / {images.length}
-                      </div>
-                    </>
-                  )}
-                </>
-              ) : (
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <Car className="h-16 w-16 text-muted-foreground" />
-                </div>
+      {/* Top Navigation Bar */}
+      <div className="border-b border-border/50 bg-card/50 backdrop-blur-sm sticky top-16 z-30">
+        <div className="container py-4">
+          <div className="flex items-center justify-between">
+            <Button
+              variant="ghost"
+              className="gap-2"
+              onClick={() => router.push("/auctions")}
+            >
+              <ArrowLeft className="h-4 w-4" />
+              {t("backToAuctions") || "Back to Auctions"}
+            </Button>
+
+            <div className="flex items-center gap-3">
+              {isLive && <LiveBadge />}
+              {auction.source && (
+                <Badge variant="muted">{auction.source}</Badge>
               )}
-              {isEnded && (
-                <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
-                  <Badge variant="destructive" className="text-xl px-6 py-3">
-                    Auction Ended
-                  </Badge>
-                </div>
-              )}
+              <Badge variant="outline" className="font-mono">
+                #{auction.referenceNumber}
+              </Badge>
             </div>
+          </div>
+        </div>
+      </div>
 
-            {/* Thumbnail strip */}
-            {images.length > 1 && (
-              <div className="p-4 border-t">
-                <div className="flex gap-2 overflow-x-auto pb-2">
-                  {images.map((img: ImageInfo, idx: number) => (
-                    <button
-                      key={idx}
-                      onClick={() => setCurrentImageIndex(idx)}
-                      className={`relative w-20 h-16 flex-shrink-0 rounded overflow-hidden border-2 transition-colors ${
-                        idx === currentImageIndex
-                          ? "border-primary"
-                          : "border-transparent hover:border-muted-foreground/50"
-                      }`}
-                    >
-                      <Image
-                        src={img.url}
-                        alt={`Thumbnail ${idx + 1}`}
-                        fill
-                        className="object-cover"
-                        style={{
-                          objectPosition: IMAGE_CROP_CONFIG.objectPosition,
-                          transform: `scale(1.${IMAGE_CROP_CONFIG.cropBottomPercent.toString().padStart(2, '0')})`,
-                          transformOrigin: 'top center'
-                        }}
-                        unoptimized={img.unoptimized}
-                      />
-                    </button>
-                  ))}
-                </div>
-              </div>
+      <div className="container py-8">
+        {/* Title Section */}
+        <div className="mb-8">
+          <p className="text-muted-foreground mb-2">
+            {auction.year} {auction.make}
+          </p>
+          <h1 className="font-display text-3xl md:text-4xl font-bold mb-4">
+            {auction.title}
+          </h1>
+          <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
+            <span className="flex items-center gap-1.5">
+              <Calendar className="h-4 w-4" />
+              {auction.year}
+            </span>
+            <span className="flex items-center gap-1.5">
+              <Gauge className="h-4 w-4" />
+              {auction.mileage.toLocaleString()} km
+            </span>
+            <span className="flex items-center gap-1.5">
+              <Fuel className="h-4 w-4" />
+              {fuelTypeLabel[auction.fuelType] || auction.fuelType}
+            </span>
+            <span className="flex items-center gap-1.5">
+              <Settings2 className="h-4 w-4" />
+              {transmissionLabel[auction.transmission] || auction.transmission}
+            </span>
+            {auction.location && (
+              <span className="flex items-center gap-1.5">
+                <MapPin className="h-4 w-4" />
+                {auction.location}
+              </span>
             )}
-          </Card>
-
-          {/* Vehicle details tabs */}
-          <Tabs defaultValue="specs" className="w-full">
-            <TabsList className="w-full justify-start">
-              <TabsTrigger value="specs">Specifications</TabsTrigger>
-              <TabsTrigger value="description">Description</TabsTrigger>
-              <TabsTrigger value="damage">Damage Report</TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="specs">
-              <Card>
-                <CardContent className="pt-6">
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                    <div className="flex items-start gap-3">
-                      <Calendar className="h-5 w-5 text-muted-foreground mt-0.5" />
-                      <div>
-                        <p className="text-sm text-muted-foreground">Year</p>
-                        <p className="font-medium">{auction.year}</p>
-                      </div>
-                    </div>
-
-                    <div className="flex items-start gap-3">
-                      <Gauge className="h-5 w-5 text-muted-foreground mt-0.5" />
-                      <div>
-                        <p className="text-sm text-muted-foreground">Mileage</p>
-                        <p className="font-medium">
-                          {auction.mileage.toLocaleString()} km
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="flex items-start gap-3">
-                      <Fuel className="h-5 w-5 text-muted-foreground mt-0.5" />
-                      <div>
-                        <p className="text-sm text-muted-foreground">Fuel Type</p>
-                        <p className="font-medium">
-                          {fuelTypeLabel[auction.fuelType] || auction.fuelType}
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="flex items-start gap-3">
-                      <Settings2 className="h-5 w-5 text-muted-foreground mt-0.5" />
-                      <div>
-                        <p className="text-sm text-muted-foreground">Transmission</p>
-                        <p className="font-medium">
-                          {transmissionLabel[auction.transmission] ||
-                            auction.transmission}
-                        </p>
-                      </div>
-                    </div>
-
-                    {auction.engineSize && (
-                      <div className="flex items-start gap-3">
-                        <Settings2 className="h-5 w-5 text-muted-foreground mt-0.5" />
-                        <div>
-                          <p className="text-sm text-muted-foreground">Engine Size</p>
-                          <p className="font-medium">{auction.engineSize} cc</p>
-                        </div>
-                      </div>
-                    )}
-
-                    {auction.enginePower && (
-                      <div className="flex items-start gap-3">
-                        <Settings2 className="h-5 w-5 text-muted-foreground mt-0.5" />
-                        <div>
-                          <p className="text-sm text-muted-foreground">Power</p>
-                          <p className="font-medium">{auction.enginePower} HP</p>
-                        </div>
-                      </div>
-                    )}
-
-                    <div className="flex items-start gap-3">
-                      <Car className="h-5 w-5 text-muted-foreground mt-0.5" />
-                      <div>
-                        <p className="text-sm text-muted-foreground">Body Type</p>
-                        <p className="font-medium">{auction.bodyType}</p>
-                      </div>
-                    </div>
-
-                    {auction.color && (
-                      <div className="flex items-start gap-3">
-                        <div className="h-5 w-5 rounded-full border mt-0.5" />
-                        <div>
-                          <p className="text-sm text-muted-foreground">Color</p>
-                          <p className="font-medium">{auction.color}</p>
-                        </div>
-                      </div>
-                    )}
-
-                    <div className="flex items-start gap-3">
-                      <Info className="h-5 w-5 text-muted-foreground mt-0.5" />
-                      <div>
-                        <p className="text-sm text-muted-foreground">Condition</p>
-                        <Badge
-                          variant={
-                            auction.condition === "EXCELLENT" ||
-                            auction.condition === "GOOD"
-                              ? "success"
-                              : auction.condition === "DAMAGED" ||
-                                auction.condition === "SALVAGE"
-                              ? "destructive"
-                              : "secondary"
-                          }
-                        >
-                          {conditionLabel[auction.condition] || auction.condition}
-                        </Badge>
-                      </div>
-                    </div>
-
-                    {auction.location && (
-                      <div className="flex items-start gap-3">
-                        <MapPin className="h-5 w-5 text-muted-foreground mt-0.5" />
-                        <div>
-                          <p className="text-sm text-muted-foreground">Location</p>
-                          <p className="font-medium">{auction.location}</p>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-
-                  <Separator className="my-6" />
-
-                  {/* VIN - Client-side only rendering */}
-                  <div className="flex items-start gap-3">
-                    <Hash className="h-5 w-5 text-muted-foreground mt-0.5" />
-                    <div>
-                      <p className="text-sm text-muted-foreground">
-                        VIN (Chassis Number)
-                      </p>
-                      {showVin ? (
-                        <p className="font-mono font-medium">{auction.vin}</p>
-                      ) : (
-                        <p className="font-mono font-medium text-muted-foreground">
-                          Loading...
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </TabsContent>
-
-            <TabsContent value="description">
-              <Card>
-                <CardContent className="pt-6">
-                  {auction.description ? (
-                    <p className="whitespace-pre-wrap">{auction.description}</p>
-                  ) : (
-                    <p className="text-muted-foreground">
-                      No description available for this vehicle.
-                    </p>
-                  )}
-                </CardContent>
-              </Card>
-            </TabsContent>
-
-            <TabsContent value="damage">
-              <Card>
-                <CardContent className="pt-6">
-                  {auction.damageDescription ? (
-                    <div className="space-y-4">
-                      <div className="flex items-center gap-2 text-amber-600">
-                        <AlertTriangle className="h-5 w-5" />
-                        <span className="font-medium">Damage Report</span>
-                      </div>
-                      <p className="whitespace-pre-wrap">
-                        {auction.damageDescription}
-                      </p>
-                    </div>
-                  ) : (
-                    <p className="text-muted-foreground">
-                      No damage reported for this vehicle.
-                    </p>
-                  )}
-                </CardContent>
-              </Card>
-            </TabsContent>
-          </Tabs>
+          </div>
         </div>
 
-        {/* Right column - Bidding */}
-        <div className="space-y-6">
-          {/* Title and price */}
-          <Card>
-            <CardHeader>
-              <div className="flex items-start justify-between gap-4">
-                <div>
-                  <CardTitle className="text-2xl">{auction.title}</CardTitle>
-                  <p className="text-muted-foreground mt-1">
-                    {auction.make} {auction.model}
-                  </p>
-                </div>
-                {auction.source && (
-                  <Badge variant="secondary">{auction.source}</Badge>
+        {/* Main Content - 70/30 Split */}
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_380px] gap-8">
+          {/* Left Column - Gallery & Details (70%) */}
+          <div className="space-y-8">
+            {/* Image Gallery */}
+            <Card className="overflow-hidden border-border/50">
+              <div className="relative aspect-[16/10] bg-muted">
+                {images.length > 0 ? (
+                  <>
+                    <Image
+                      src={images[currentImageIndex].url}
+                      alt={`${auction.title} - Image ${currentImageIndex + 1}`}
+                      fill
+                      className="object-cover cursor-pointer"
+                      priority
+                      unoptimized={images[currentImageIndex].unoptimized}
+                      onClick={() => setLightboxOpen(true)}
+                    />
+                    {images.length > 1 && (
+                      <>
+                        <Button
+                          variant="glass"
+                          size="icon"
+                          className="absolute left-4 top-1/2 -translate-y-1/2 h-10 w-10"
+                          onClick={handlePrevImage}
+                        >
+                          <ChevronLeft className="h-5 w-5" />
+                        </Button>
+                        <Button
+                          variant="glass"
+                          size="icon"
+                          className="absolute right-4 top-1/2 -translate-y-1/2 h-10 w-10"
+                          onClick={handleNextImage}
+                        >
+                          <ChevronRight className="h-5 w-5" />
+                        </Button>
+                      </>
+                    )}
+
+                    {/* Expand button */}
+                    <Button
+                      variant="glass"
+                      size="icon"
+                      className="absolute top-4 right-4 h-10 w-10"
+                      onClick={() => setLightboxOpen(true)}
+                    >
+                      <Maximize2 className="h-5 w-5" />
+                    </Button>
+
+                    {/* Image counter */}
+                    <div className="absolute bottom-4 left-4 bg-black/60 backdrop-blur-sm px-3 py-1.5 rounded-full text-sm text-white font-mono">
+                      {currentImageIndex + 1} / {images.length}
+                    </div>
+                  </>
+                ) : (
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <Car className="h-20 w-20 text-muted-foreground/30" />
+                  </div>
+                )}
+
+                {/* Ended Overlay */}
+                {isEnded && (
+                  <div className="absolute inset-0 bg-black/60 flex items-center justify-center backdrop-blur-sm">
+                    <Badge
+                      variant="destructive"
+                      className="text-xl px-6 py-3 font-display"
+                    >
+                      {t("auctionEnded") || "Auction Ended"}
+                    </Badge>
+                  </div>
                 )}
               </div>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Hash className="h-4 w-4" />
-                <span className="font-mono">{auction.referenceNumber}</span>
-              </div>
 
-              <Separator />
-
-              {/* Show user's own bid or starting price - sealed bid format */}
-              {session && userBid ? (
-                <div>
-                  <p className="text-sm text-muted-foreground">Your Current Bid</p>
-                  <p className="text-3xl font-bold text-primary">
-                    {userBid.amount.toLocaleString()} PLN
-                  </p>
-                </div>
-              ) : (
-                <div>
-                  <p className="text-sm text-muted-foreground">Starting Price</p>
-                  <p className="text-3xl font-bold text-primary">
-                    {auction.startingPrice.toLocaleString()} PLN
-                  </p>
-                </div>
-              )}
-
-              {auction.suggestedValue && (
-                <div>
-                  <p className="text-sm text-muted-foreground">Estimated Value</p>
-                  <p className="text-lg font-medium">
-                    {auction.suggestedValue.toLocaleString()} PLN
-                  </p>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Countdown */}
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center gap-3">
-                <Clock
-                  className={`h-6 w-6 ${
-                    isEnded
-                      ? "text-destructive"
-                      : countdown.isUrgent
-                      ? "text-amber-500"
-                      : "text-primary"
-                  }`}
-                />
-                <div>
-                  <p className="text-sm text-muted-foreground">
-                    {isEnded ? "Auction Ended" : "Time Remaining"}
-                  </p>
-                  <p
-                    className={`text-xl font-bold ${
-                      isEnded
-                        ? "text-destructive"
-                        : countdown.isUrgent
-                        ? "text-amber-500"
-                        : "text-foreground"
-                    }`}
-                  >
-                    {countdown.text}
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Bid form - only show when logged in */}
-          {!isEnded && session ? (
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Gavel className="h-5 w-5" />
-                  {userBid ? "Update Your Bid" : "Place a Bid"}
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div>
-                  <p className="text-sm text-muted-foreground mb-2">
-                    {userBid
-                      ? `To update your bid, enter an amount higher than ${userBid.amount.toLocaleString()} PLN`
-                      : `Minimum bid: ${auction.startingPrice.toLocaleString()} PLN`
-                    }
-                  </p>
-                  <div className="flex gap-2">
-                    <Input
-                      type="number"
-                      placeholder={`${minBid}`}
-                      value={bidAmount}
-                      onChange={(e) => setBidAmount(e.target.value)}
-                      min={minBid}
-                      step={100}
-                    />
-                    <Button
-                      onClick={handleBid}
-                      disabled={isSubmitting}
-                      className="whitespace-nowrap"
-                    >
-                      {isSubmitting ? "Placing..." : userBid ? "Update Bid" : "Place Bid"}
-                    </Button>
+              {/* Thumbnail Strip */}
+              {images.length > 1 && (
+                <div className="p-4 border-t border-border/50 bg-muted/30">
+                  <div className="flex gap-2 overflow-x-auto pb-1">
+                    {images.map((img: ImageInfo, idx: number) => (
+                      <button
+                        key={idx}
+                        onClick={() => setCurrentImageIndex(idx)}
+                        className={cn(
+                          "relative w-20 h-14 flex-shrink-0 rounded-lg overflow-hidden border-2 transition-all",
+                          idx === currentImageIndex
+                            ? "border-primary ring-2 ring-primary/30"
+                            : "border-transparent opacity-60 hover:opacity-100"
+                        )}
+                      >
+                        <Image
+                          src={img.url}
+                          alt={`Thumbnail ${idx + 1}`}
+                          fill
+                          className="object-cover"
+                          unoptimized={img.unoptimized}
+                        />
+                      </button>
+                    ))}
                   </div>
                 </div>
-              </CardContent>
+              )}
             </Card>
-          ) : !isEnded ? (
-            <Card>
+
+            {/* Vitals Table */}
+            <Card className="border-border/50">
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Gavel className="h-5 w-5" />
-                  Place a Bid
+                <CardTitle className="font-display flex items-center gap-2">
+                  <ShieldCheck className="h-5 w-5 text-primary" />
+                  {t("vehicleVitals") || "Vehicle Vitals"}
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-sm text-muted-foreground">
-                  Please{" "}
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
+                  <div>
+                    <p className="text-sm text-muted-foreground mb-1">
+                      {t("year") || "Year"}
+                    </p>
+                    <p className="font-semibold">{auction.year}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground mb-1">
+                      {t("mileage") || "Mileage"}
+                    </p>
+                    <p className="font-semibold">
+                      {auction.mileage.toLocaleString()} km
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground mb-1">
+                      {t("fuelType") || "Fuel Type"}
+                    </p>
+                    <p className="font-semibold">
+                      {fuelTypeLabel[auction.fuelType] || auction.fuelType}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground mb-1">
+                      {t("transmission") || "Transmission"}
+                    </p>
+                    <p className="font-semibold">
+                      {transmissionLabel[auction.transmission] ||
+                        auction.transmission}
+                    </p>
+                  </div>
+                  {auction.engineSize && (
+                    <div>
+                      <p className="text-sm text-muted-foreground mb-1">
+                        {t("engineSize") || "Engine Size"}
+                      </p>
+                      <p className="font-semibold">{auction.engineSize} cc</p>
+                    </div>
+                  )}
+                  {auction.enginePower && (
+                    <div>
+                      <p className="text-sm text-muted-foreground mb-1">
+                        {t("power") || "Power"}
+                      </p>
+                      <p className="font-semibold">{auction.enginePower} HP</p>
+                    </div>
+                  )}
+                  <div>
+                    <p className="text-sm text-muted-foreground mb-1">
+                      {t("bodyType") || "Body Type"}
+                    </p>
+                    <p className="font-semibold">{auction.bodyType}</p>
+                  </div>
+                  {auction.color && (
+                    <div>
+                      <p className="text-sm text-muted-foreground mb-1">
+                        {t("color") || "Color"}
+                      </p>
+                      <p className="font-semibold">{auction.color}</p>
+                    </div>
+                  )}
+                  <div>
+                    <p className="text-sm text-muted-foreground mb-1">
+                      {t("condition") || "Condition"}
+                    </p>
+                    <Badge variant={conditionVariant(auction.condition)}>
+                      {conditionLabel[auction.condition] || auction.condition}
+                    </Badge>
+                  </div>
+                </div>
+
+                <Separator className="my-6" />
+
+                {/* VIN with copy */}
+                <div className="flex items-center justify-between p-4 bg-muted/30 rounded-lg">
+                  <div>
+                    <p className="text-sm text-muted-foreground mb-1">
+                      {t("vin") || "VIN (Chassis Number)"}
+                    </p>
+                    {showVin ? (
+                      <p className="font-mono font-semibold text-lg">
+                        {auction.vin}
+                      </p>
+                    ) : (
+                      <p className="font-mono text-muted-foreground">
+                        Loading...
+                      </p>
+                    )}
+                  </div>
                   <Button
-                    variant="link"
-                    className="p-0 h-auto"
-                    onClick={() => router.push("/login")}
+                    variant="ghost"
+                    size="icon"
+                    onClick={copyVin}
+                    className="h-10 w-10"
                   >
-                    sign in
-                  </Button>{" "}
-                  to place a bid on this auction.
-                </p>
+                    {vinCopied ? (
+                      <Check className="h-5 w-5 text-green-500" />
+                    ) : (
+                      <Copy className="h-5 w-5" />
+                    )}
+                  </Button>
+                </div>
               </CardContent>
             </Card>
-          ) : null}
 
-          {/* Sealed bid auction - no bid history shown to users */}
+            {/* Details Tabs */}
+            <Tabs defaultValue="description" className="w-full">
+              <TabsList className="w-full justify-start bg-muted/30 p-1">
+                <TabsTrigger value="description" className="flex-1 max-w-[200px]">
+                  {t("description") || "Description"}
+                </TabsTrigger>
+                <TabsTrigger value="damage" className="flex-1 max-w-[200px]">
+                  {t("damageReport") || "Damage Report"}
+                </TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="description">
+                <Card className="border-border/50">
+                  <CardContent className="pt-6">
+                    {auction.description ? (
+                      <p className="whitespace-pre-wrap text-muted-foreground leading-relaxed">
+                        {auction.description}
+                      </p>
+                    ) : (
+                      <p className="text-muted-foreground italic">
+                        {t("noDescription") ||
+                          "No description available for this vehicle."}
+                      </p>
+                    )}
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              <TabsContent value="damage">
+                <Card className="border-border/50">
+                  <CardContent className="pt-6">
+                    {auction.damageDescription ? (
+                      <div className="space-y-4">
+                        <div className="flex items-center gap-2 text-amber-500">
+                          <AlertTriangle className="h-5 w-5" />
+                          <span className="font-semibold">
+                            {t("damageReported") || "Damage Reported"}
+                          </span>
+                        </div>
+                        <p className="whitespace-pre-wrap text-muted-foreground leading-relaxed">
+                          {auction.damageDescription}
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-2 text-green-500">
+                        <ShieldCheck className="h-5 w-5" />
+                        <span>
+                          {t("noDamage") || "No damage reported for this vehicle."}
+                        </span>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </TabsContent>
+            </Tabs>
+          </div>
+
+          {/* Right Column - Sticky Bid Widget (30%) */}
+          <div className="lg:relative">
+            <div className="lg:sticky lg:top-32 space-y-6">
+              {/* Main Bid Card */}
+              <Card className="glass-dark border-border/30 shadow-xl">
+                <CardContent className="p-6 space-y-6">
+                  {/* Price Display */}
+                  <div className="text-center">
+                    <p className="text-sm text-muted-foreground uppercase tracking-wide mb-2">
+                      {session && userBid
+                        ? t("yourCurrentBid") || "Your Current Bid"
+                        : t("startingPrice") || "Starting Price"}
+                    </p>
+                    <p className="font-mono text-4xl font-bold text-primary">
+                      {(session && userBid
+                        ? userBid.amount
+                        : auction.startingPrice
+                      ).toLocaleString()}{" "}
+                      <span className="text-2xl">PLN</span>
+                    </p>
+                    {auction.suggestedValue && (
+                      <p className="text-sm text-muted-foreground mt-2 flex items-center justify-center gap-1">
+                        <TrendingUp className="h-4 w-4" />
+                        {t("estValue") || "Est. Value"}:{" "}
+                        {auction.suggestedValue.toLocaleString()} PLN
+                      </p>
+                    )}
+                  </div>
+
+                  <Separator className="bg-border/30" />
+
+                  {/* Countdown */}
+                  <div className="text-center">
+                    <p className="text-sm text-muted-foreground uppercase tracking-wide mb-2">
+                      {isEnded
+                        ? t("auctionEnded") || "Auction Ended"
+                        : t("timeRemaining") || "Time Remaining"}
+                    </p>
+                    <CountdownTimer
+                      endDate={endDate}
+                      className="text-2xl font-bold"
+                      showSnipeWarning
+                    />
+                  </div>
+
+                  {/* Bid Form - Only for logged in users on active auctions */}
+                  {!isEnded && session && (
+                    <>
+                      <Separator className="bg-border/30" />
+
+                      {/* Quick Bid Buttons */}
+                      <QuickBidButtons
+                        onIncrement={handleQuickBid}
+                        disabled={isSubmitting}
+                      />
+
+                      {/* Custom Amount Input */}
+                      <div>
+                        <p className="text-sm text-muted-foreground mb-2">
+                          {t("customAmount") || "Custom Amount"}
+                        </p>
+                        <div className="flex gap-2">
+                          <div className="relative flex-1">
+                            <Input
+                              type="number"
+                              placeholder={`Min: ${minBid.toLocaleString()}`}
+                              value={bidAmount}
+                              onChange={(e) => setBidAmount(e.target.value)}
+                              min={minBid}
+                              step={100}
+                              className="pr-12 bg-background/50 border-border/50"
+                            />
+                            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">
+                              PLN
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Place Bid Button */}
+                      <Button
+                        variant="bid"
+                        size="xl"
+                        className="w-full"
+                        onClick={handleBid}
+                        disabled={isSubmitting || !bidAmount}
+                      >
+                        <Gavel className="h-5 w-5 mr-2" />
+                        {isSubmitting
+                          ? t("placing") || "Placing..."
+                          : userBid
+                          ? t("updateBid") || "Update Bid"
+                          : t("placeBid") || "Place Bid"}
+                      </Button>
+
+                      {/* Minimum bid hint */}
+                      <p className="text-xs text-center text-muted-foreground">
+                        {userBid
+                          ? `${t("minToUpdate") || "Minimum to update"}: ${minBid.toLocaleString()} PLN`
+                          : `${t("minimumBid") || "Minimum bid"}: ${minBid.toLocaleString()} PLN`}
+                      </p>
+                    </>
+                  )}
+
+                  {/* Sign in prompt */}
+                  {!isEnded && !session && (
+                    <>
+                      <Separator className="bg-border/30" />
+                      <div className="text-center space-y-4">
+                        <p className="text-sm text-muted-foreground">
+                          {t("signInToBid") || "Sign in to place a bid"}
+                        </p>
+                        <Button
+                          variant="bid"
+                          size="lg"
+                          className="w-full"
+                          onClick={() => router.push("/login")}
+                        >
+                          {t("signIn") || "Sign In to Bid"}
+                        </Button>
+                      </div>
+                    </>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Trust Badges */}
+              <div className="flex flex-wrap justify-center gap-2">
+                <VerifiedBadge />
+                <Badge
+                  variant="muted"
+                  className="flex items-center gap-1.5 px-3 py-1.5"
+                >
+                  <ShieldCheck className="h-3.5 w-3.5" />
+                  {t("securePayment") || "Secure Payment"}
+                </Badge>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>

@@ -1,6 +1,6 @@
-# NovaDrive Motors - Deployment Guide
+# Samochody.be - Deployment Guide
 
-This guide covers deploying NovaDrive Motors to DigitalOcean App Platform using Docker.
+This guide covers deploying Samochody.be to DigitalOcean App Platform using Docker.
 
 ---
 
@@ -30,7 +30,7 @@ This guide covers deploying NovaDrive Motors to DigitalOcean App Platform using 
 
 ```bash
 # Build the Docker image
-docker build -t novadrive-motors .
+docker build -t samochody-be .
 
 # Run with docker-compose
 docker-compose up -d
@@ -76,7 +76,7 @@ git branch -M main
 git add .
 
 # Commit
-git commit -m "Initial commit: NovaDrive Motors auction platform"
+git commit -m "Initial commit: Samochody.be auction platform"
 
 # Push
 git push -u origin main

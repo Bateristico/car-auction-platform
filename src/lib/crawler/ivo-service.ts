@@ -10,6 +10,13 @@
 import { chromium, Browser, BrowserContext, Page } from "playwright"
 import { crawlerConfig, validateCrawlerConfig } from "./config"
 import { crawlerLogger } from "./logger"
+import {
+  withRetry,
+  checkResponseStatus,
+  CrawlerError,
+  CrawlerErrorCode,
+  isLoginRedirect,
+} from "./retry"
 import fs from "fs"
 import path from "path"
 
@@ -292,6 +299,66 @@ export class IvoService {
   }
 
   /**
+   * Check if the current session is valid (public method)
+   */
+  async isSessionValid(): Promise<boolean> {
+    if (!this.ivoPage) {
+      return false
+    }
+    return await this.verifyIvoSession()
+  }
+
+  /**
+   * Refresh session by re-authenticating (without creating new browser)
+   * Used when session expires mid-operation
+   */
+  async refreshSession(): Promise<void> {
+    crawlerLogger.info("Refreshing IVO session...")
+
+    if (!this.browser) {
+      throw new CrawlerError(
+        "Browser not initialized. Call init() first.",
+        CrawlerErrorCode.SCRAPE_FAILED
+      )
+    }
+
+    // Close existing context if any
+    if (this.context) {
+      try {
+        await this.context.close()
+      } catch {
+        // Ignore close errors
+      }
+    }
+
+    // Re-authenticate from scratch
+    await this.authenticateToIvo()
+    crawlerLogger.info("IVO session refreshed successfully")
+  }
+
+  /**
+   * Check if a response indicates session expiration
+   */
+  private isSessionExpiredResponse(response: { ok: () => boolean; status: () => number; url: () => string } | null): boolean {
+    if (!response) return false
+
+    const url = response.url()
+    const status = response.status()
+
+    // Check for login redirect
+    if (isLoginRedirect(url)) {
+      return true
+    }
+
+    // Check for auth error status codes
+    if (status === 401 || status === 403) {
+      return true
+    }
+
+    return false
+  }
+
+  /**
    * Save IVO authentication state
    */
   private async saveIvoAuthState(): Promise<void> {
@@ -341,10 +408,15 @@ export class IvoService {
 
   /**
    * Fetch auction list data (FREE endpoint)
+   * Includes automatic retry with exponential backoff for 5XX errors
+   * and automatic session refresh on expiration
    */
   async fetchAuctionList(dayId: number = 0): Promise<string> {
     if (!this.ivoPage) {
-      throw new Error("IVO not initialized. Call init() first.")
+      throw new CrawlerError(
+        "IVO not initialized. Call init() first.",
+        CrawlerErrorCode.SCRAPE_FAILED
+      )
     }
 
     const endpoint = crawlerConfig.ivo.endpoints.auctionsList.replace(
@@ -353,40 +425,86 @@ export class IvoService {
     )
     const url = `${crawlerConfig.ivo.baseUrl}${endpoint}`
 
-    crawlerLogger.info(`Fetching auction list (FREE): ${url}`)
+    return await withRetry(
+      async () => {
+        crawlerLogger.info(`Fetching auction list (FREE): ${url}`)
 
-    const response = await this.ivoPage.goto(url)
+        const response = await this.ivoPage!.goto(url)
 
-    if (!response || !response.ok()) {
-      throw new Error(`Failed to fetch auction list: ${response?.status()}`)
-    }
+        // Check for session expiration first
+        if (this.isSessionExpiredResponse(response)) {
+          throw new CrawlerError(
+            "Session expired during auction list fetch",
+            CrawlerErrorCode.SESSION_EXPIRED,
+            { retryable: false }
+          )
+        }
 
-    const html = await this.ivoPage.content()
-    crawlerLogger.info(`Received ${html.length} bytes of auction list data`)
+        // Check response status (throws CrawlerError for 5XX)
+        checkResponseStatus(response, "auction list fetch")
 
-    return html
+        const html = await this.ivoPage!.content()
+        crawlerLogger.info(`Received ${html.length} bytes of auction list data`)
+
+        return html
+      },
+      {
+        maxRetries: 3,
+        baseDelayMs: 1000,
+        context: `fetchAuctionList(day_id=${dayId})`,
+        onSessionExpired: async () => {
+          await this.refreshSession()
+        },
+      }
+    )
   }
 
   /**
    * Fetch available day IDs from the menu (FREE endpoint)
    * Returns array of day IDs that have auctions
+   * Includes automatic retry with exponential backoff
    */
   async fetchAvailableDayIds(): Promise<number[]> {
     if (!this.ivoPage) {
-      throw new Error("IVO not initialized. Call init() first.")
+      throw new CrawlerError(
+        "IVO not initialized. Call init() first.",
+        CrawlerErrorCode.SCRAPE_FAILED
+      )
     }
 
     const url = `${crawlerConfig.ivo.baseUrl}${crawlerConfig.ivo.endpoints.auctionsMenu}`
-    crawlerLogger.info(`Fetching auction menu (FREE): ${url}`)
 
-    const response = await this.ivoPage.goto(url)
+    const html = await withRetry(
+      async () => {
+        crawlerLogger.info(`Fetching auction menu (FREE): ${url}`)
 
-    if (!response || !response.ok()) {
-      throw new Error(`Failed to fetch auction menu: ${response?.status()}`)
-    }
+        const response = await this.ivoPage!.goto(url)
 
-    const html = await this.ivoPage.content()
-    crawlerLogger.info(`Received ${html.length} bytes of menu data`)
+        // Check for session expiration first
+        if (this.isSessionExpiredResponse(response)) {
+          throw new CrawlerError(
+            "Session expired during menu fetch",
+            CrawlerErrorCode.SESSION_EXPIRED,
+            { retryable: false }
+          )
+        }
+
+        // Check response status (throws CrawlerError for 5XX)
+        checkResponseStatus(response, "auction menu fetch")
+
+        const content = await this.ivoPage!.content()
+        crawlerLogger.info(`Received ${content.length} bytes of menu data`)
+        return content
+      },
+      {
+        maxRetries: 3,
+        baseDelayMs: 1000,
+        context: "fetchAvailableDayIds",
+        onSessionExpired: async () => {
+          await this.refreshSession()
+        },
+      }
+    )
 
     // Parse the menu to extract day_ids
     // The menu contains tabs/links with day_id parameters
@@ -450,22 +568,47 @@ export class IvoService {
 
   /**
    * Fetch auction menu/calendar (FREE endpoint)
+   * Includes automatic retry with exponential backoff
    */
   async fetchAuctionMenu(): Promise<string> {
     if (!this.ivoPage) {
-      throw new Error("IVO not initialized. Call init() first.")
+      throw new CrawlerError(
+        "IVO not initialized. Call init() first.",
+        CrawlerErrorCode.SCRAPE_FAILED
+      )
     }
 
     const url = `${crawlerConfig.ivo.baseUrl}${crawlerConfig.ivo.endpoints.auctionsMenu}`
-    crawlerLogger.info(`Fetching auction menu (FREE): ${url}`)
 
-    const response = await this.ivoPage.goto(url)
+    return await withRetry(
+      async () => {
+        crawlerLogger.info(`Fetching auction menu (FREE): ${url}`)
 
-    if (!response || !response.ok()) {
-      throw new Error(`Failed to fetch auction menu: ${response?.status()}`)
-    }
+        const response = await this.ivoPage!.goto(url)
 
-    return await this.ivoPage.content()
+        // Check for session expiration first
+        if (this.isSessionExpiredResponse(response)) {
+          throw new CrawlerError(
+            "Session expired during menu fetch",
+            CrawlerErrorCode.SESSION_EXPIRED,
+            { retryable: false }
+          )
+        }
+
+        // Check response status (throws CrawlerError for 5XX)
+        checkResponseStatus(response, "auction menu fetch")
+
+        return await this.ivoPage!.content()
+      },
+      {
+        maxRetries: 3,
+        baseDelayMs: 1000,
+        context: "fetchAuctionMenu",
+        onSessionExpired: async () => {
+          await this.refreshSession()
+        },
+      }
+    )
   }
 
   /**
@@ -482,10 +625,18 @@ export class IvoService {
 
   /**
    * Fetch auction detail (COSTS MONEY!)
+   * Includes automatic retry with exponential backoff for 5XX errors
+   * and automatic session refresh on expiration.
+   *
+   * IMPORTANT: This endpoint costs ~0.23 EUR per call. Retries are still
+   * performed on server errors (5XX) since the charge may not have been applied.
    */
   async fetchAuctionDetail(auctionId: string, reason: string): Promise<string> {
     if (!this.ivoPage) {
-      throw new Error("IVO not initialized. Call init() first.")
+      throw new CrawlerError(
+        "IVO not initialized. Call init() first.",
+        CrawlerErrorCode.SCRAPE_FAILED
+      )
     }
 
     crawlerLogger.cost(
@@ -494,13 +645,33 @@ export class IvoService {
 
     const url = `${crawlerConfig.ivo.baseUrl}${crawlerConfig.ivo.endpoints.auctionDetail}?auction_id=${auctionId}`
 
-    const response = await this.ivoPage.goto(url)
+    return await withRetry(
+      async () => {
+        const response = await this.ivoPage!.goto(url)
 
-    if (!response || !response.ok()) {
-      throw new Error(`Failed to fetch auction detail: ${response?.status()}`)
-    }
+        // Check for session expiration first
+        if (this.isSessionExpiredResponse(response)) {
+          throw new CrawlerError(
+            `Session expired during auction detail fetch for ${auctionId}`,
+            CrawlerErrorCode.SESSION_EXPIRED,
+            { retryable: false }
+          )
+        }
 
-    return await this.ivoPage.content()
+        // Check response status (throws CrawlerError for 5XX)
+        checkResponseStatus(response, `auction detail fetch (${auctionId})`)
+
+        return await this.ivoPage!.content()
+      },
+      {
+        maxRetries: 3,
+        baseDelayMs: 2000, // Longer delay for paid endpoint
+        context: `fetchAuctionDetail(${auctionId})`,
+        onSessionExpired: async () => {
+          await this.refreshSession()
+        },
+      }
+    )
   }
 
   /**

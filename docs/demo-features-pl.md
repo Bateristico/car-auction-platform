@@ -1,6 +1,6 @@
-# NovaDrive Motors - Przewodnik po Funkcjach Platformy
+# Samochody.be - Przewodnik po Funkcjach Platformy
 
-Witamy w NovaDrive Motors, wiodącej polskiej platformie aukcji pojazdów online. Ten przewodnik wyjaśnia wszystkie dostępne funkcje na naszej platformie oraz jak najlepiej wykorzystać możliwości systemu.
+Witamy w Samochody.be, wiodącej polskiej platformie aukcji pojazdów online. Ten przewodnik wyjaśnia wszystkie dostępne funkcje na naszej platformie oraz jak najlepiej wykorzystać możliwości systemu.
 
 ---
 
@@ -17,9 +17,9 @@ Witamy w NovaDrive Motors, wiodącej polskiej platformie aukcji pojazdów online
 
 ## Wprowadzenie
 
-### O NovaDrive Motors
+### O Samochody.be
 
-NovaDrive Motors to internetowa platforma aukcji pojazdów, która łączy kupujących z wysokiej jakości pojazdami od zaufanych źródeł z całej Europy. Od naszego założenia w 2019 roku pomogliśmy tysiącom klientów znaleźć idealny pojazd w konkurencyjnych cenach aukcyjnych.
+Samochody.be to internetowa platforma aukcji pojazdów, która łączy kupujących z wysokiej jakości pojazdami od zaufanych źródeł z całej Europy. Od naszego założenia w 2019 roku pomogliśmy tysiącom klientów znaleźć idealny pojazd w konkurencyjnych cenach aukcyjnych.
 
 ### Co Oferujemy
 
@@ -42,7 +42,7 @@ NovaDrive Motors to internetowa platforma aukcji pojazdów, która łączy kupuj
 
 ### Strona Główna
 
-Odwiedzając NovaDrive Motors, zobaczysz:
+Odwiedzając Samochody.be, zobaczysz:
 
 - **Statystyki Platformy na Żywo**: Zobacz ile aktywnych aukcji jest dostępnych, łączną liczbę zarejestrowanych użytkowników i złożonych ofert
 - **Wyróżnione Aukcje**: Wybór aukcji kończących się wkrótce, żebyś niczego nie przegapił
@@ -212,7 +212,7 @@ Możesz również zarejestrować się natychmiast używając konta Google.
 
 ### Jak Działają Nasze Aukcje
 
-NovaDrive Motors używa formatu **aukcji zamkniętej**:
+Samochody.be używa formatu **aukcji zamkniętej**:
 
 1. **Przeglądaj**: Znajdź pojazdy, które Cię interesują
 2. **Badaj**: Przejrzyj wszystkie zdjęcia, specyfikacje i raporty o stanie
@@ -420,14 +420,14 @@ Konfiguruj opcje systemowe:
 
 ### Strona O Nas
 
-Dowiedz się więcej o NovaDrive Motors:
+Dowiedz się więcej o Samochody.be:
 - Historia i misja firmy
 - Wartości i zobowiązania
 - Informacje o zespole zarządzającym
 - Adres i dane rejestrowe
 
 **Informacje o Firmie:**
-- Pełna nazwa: NovaDrive Motors Sp. z o.o.
+- Pełna nazwa: Samochody.be Sp. z o.o.
 - Założona: 2019
 - Siedziba: Warszawa, Polska
 - Założyciel i CEO: Rafał Noga
@@ -435,10 +435,10 @@ Dowiedz się więcej o NovaDrive Motors:
 ### Opcje Kontaktu
 
 **Skontaktuj się z Nami:**
-- **Zapytania Ogólne**: info@novadrivemotors.pl
-- **Obsługa Klienta**: support@novadrivemotors.pl
-- **Dział Sprzedaży**: sales@novadrivemotors.pl
-- **Dział Prawny**: legal@novadrivemotors.pl
+- **Zapytania Ogólne**: info@samochody.be
+- **Obsługa Klienta**: support@samochody.be
+- **Dział Sprzedaży**: sales@samochody.be
+- **Dział Prawny**: legal@samochody.be
 - **Telefon**: +48 22 123 45 67
 
 **Godziny Pracy:**
@@ -448,7 +448,7 @@ Dowiedz się więcej o NovaDrive Motors:
 
 **Adres:**
 ```
-NovaDrive Motors Sp. z o.o.
+Samochody.be Sp. z o.o.
 ul. Motoryzacyjna 42
 02-495 Warszawa
 Polska
@@ -489,12 +489,12 @@ Jeśli masz pytania nieomówione w tym przewodniku:
 
 - **Sprawdź naszą stronę Regulamin** dla szczegółowych wytycznych aukcyjnych
 - **Użyj formularza kontaktowego** dla spersonalizowanej pomocy
-- **Napisz na support** pod adres support@novadrivemotors.pl
+- **Napisz na support** pod adres support@samochody.be
 - **Zadzwoń do nas** pod numer +48 22 123 45 67 w godzinach pracy
 
-Dziękujemy za wybór NovaDrive Motors. Udanych licytacji!
+Dziękujemy za wybór Samochody.be. Udanych licytacji!
 
 ---
 
 *Ostatnia aktualizacja: Grudzień 2024*
-*NovaDrive Motors Sp. z o.o. - Wszelkie prawa zastrzeżone*
+*Samochody.be Sp. z o.o. - Wszelkie prawa zastrzeżone*

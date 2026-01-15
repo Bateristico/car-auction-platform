@@ -7,7 +7,7 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
   const t = await getTranslations({ locale, namespace: "about" })
 
   return {
-    title: `${t("title")} | CarAuction`,
+    title: `${t("title")} | Samochody.be`,
     description: t("subtitle"),
   }
 }
@@ -37,7 +37,7 @@ export default async function AboutPage({
           <h2 className="text-2xl font-bold mb-4">{t("ourStory")}</h2>
           <div className="space-y-4 text-muted-foreground">
             <p>
-              NovaDrive Motors was founded in 2019 by Rafal Noga, a visionary entrepreneur who saw
+              Samochody.be was founded in 2019 by Rafal Noga, a visionary entrepreneur who saw
               an opportunity to revolutionize the way vehicles are bought and sold in Poland. After
               years of experience in the automotive industry, Rafal recognized that the traditional
               car auction model was ripe for digital transformation.
@@ -59,7 +59,7 @@ export default async function AboutPage({
           <h2 className="text-2xl font-bold mb-4">{t("ourMission")}</h2>
           <div className="space-y-4 text-muted-foreground">
             <p>
-              At NovaDrive Motors, we believe everyone deserves access to quality vehicles at
+              At Samochody.be, we believe everyone deserves access to quality vehicles at
               fair prices. Our mission is to democratize the car buying experience by providing
               a transparent, secure, and user-friendly auction platform.
             </p>
@@ -190,7 +190,7 @@ export default async function AboutPage({
       <div className="bg-primary text-primary-foreground rounded-2xl p-8 text-center">
         <h2 className="text-2xl font-bold mb-4">{t("leadership")}</h2>
         <p className="text-lg opacity-90 mb-6 max-w-2xl mx-auto">
-          "Our vision is to make quality vehicles accessible to everyone. At NovaDrive Motors,
+          "Our vision is to make quality vehicles accessible to everyone. At Samochody.be,
           we're not just selling cars - we're building trust and transforming the automotive
           marketplace for the better."
         </p>

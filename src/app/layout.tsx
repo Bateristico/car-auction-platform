@@ -2,7 +2,7 @@ import type { Metadata } from "next"
 import "./globals.css"
 
 export const metadata: Metadata = {
-  title: "Car Auction - Find Your Next Car",
+  title: "Samochody.be - Find Your Next Car",
   description: "Bid on quality used cars from Switzerland. Daily auctions with 100+ new offers.",
   robots: {
     index: true,

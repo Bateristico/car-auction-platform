@@ -25,7 +25,7 @@ async function main() {
   const adminPassword = await hash("admin123", 12)
   const admin = await prisma.user.create({
     data: {
-      email: "admin@carauction.pl",
+      email: "admin@samochody.be",
       passwordHash: adminPassword,
       firstName: "Admin",
       lastName: "User",
@@ -112,7 +112,7 @@ async function main() {
 
   console.log("\n Database seeded successfully (users only)!")
   console.log("\nTest accounts:")
-  console.log("  Admin: admin@carauction.pl / admin123")
+  console.log("  Admin: admin@samochody.be / admin123")
   console.log("  User:  jan.kowalski@example.pl / user123")
   console.log("  User:  anna.nowak@example.pl / user123")
   console.log("  User:  piotr.wisniewski@example.pl / user123")

@@ -41,7 +41,7 @@ export function AdminSidebar({ user }: AdminSidebarProps) {
     <>
       {/* Mobile menu button */}
       <div className="lg:hidden fixed top-0 left-0 right-0 z-50 flex items-center justify-between bg-background border-b px-4 h-16">
-        <span className="font-bold text-lg">CarAuction Admin</span>
+        <span className="font-bold text-lg">Samochody.be Admin</span>
         <Button
           variant="ghost"
           size="icon"
@@ -69,7 +69,7 @@ export function AdminSidebar({ user }: AdminSidebarProps) {
           {/* Logo */}
           <div className="flex items-center h-16 px-6 border-b">
             <Link href="/admin" className="font-bold text-xl">
-              CarAuction
+              Samochody.be
             </Link>
             <span className="ml-2 text-xs bg-primary text-primary-foreground px-2 py-0.5 rounded">
               Admin

@@ -72,7 +72,7 @@ export default function ContactPage() {
                   <Building2 className="h-6 w-6 text-primary-foreground" />
                 </div>
                 <div>
-                  <CardTitle className="text-lg">NovaDrive Motors</CardTitle>
+                  <CardTitle className="text-lg">Samochody.be</CardTitle>
                   <CardDescription>Sp. z o.o.</CardDescription>
                 </div>
               </div>
@@ -93,8 +93,8 @@ export default function ContactPage() {
                 <Mail className="h-5 w-5 text-muted-foreground flex-shrink-0 mt-0.5" />
                 <div>
                   <p className="font-medium">Email</p>
-                  <a href="mailto:info@novadrivemotors.pl" className="text-sm text-primary hover:underline">
-                    info@novadrivemotors.pl
+                  <a href="mailto:info@samochody.be" className="text-sm text-primary hover:underline">
+                    info@samochody.be
                   </a>
                 </div>
               </div>
@@ -153,33 +153,33 @@ export default function ContactPage() {
             </CardHeader>
             <CardContent className="space-y-3">
               <a
-                href="mailto:support@novadrivemotors.pl"
+                href="mailto:support@samochody.be"
                 className="flex items-center gap-3 p-3 rounded-lg hover:bg-muted transition-colors"
               >
                 <Headphones className="h-5 w-5 text-primary" />
                 <div>
                   <p className="font-medium text-sm">Customer Support</p>
-                  <p className="text-xs text-muted-foreground">support@novadrivemotors.pl</p>
+                  <p className="text-xs text-muted-foreground">support@samochody.be</p>
                 </div>
               </a>
               <a
-                href="mailto:sales@novadrivemotors.pl"
+                href="mailto:sales@samochody.be"
                 className="flex items-center gap-3 p-3 rounded-lg hover:bg-muted transition-colors"
               >
                 <Users className="h-5 w-5 text-primary" />
                 <div>
                   <p className="font-medium text-sm">Sales Inquiries</p>
-                  <p className="text-xs text-muted-foreground">sales@novadrivemotors.pl</p>
+                  <p className="text-xs text-muted-foreground">sales@samochody.be</p>
                 </div>
               </a>
               <a
-                href="mailto:legal@novadrivemotors.pl"
+                href="mailto:legal@samochody.be"
                 className="flex items-center gap-3 p-3 rounded-lg hover:bg-muted transition-colors"
               >
                 <FileQuestion className="h-5 w-5 text-primary" />
                 <div>
                   <p className="font-medium text-sm">Legal & Compliance</p>
-                  <p className="text-xs text-muted-foreground">legal@novadrivemotors.pl</p>
+                  <p className="text-xs text-muted-foreground">legal@samochody.be</p>
                 </div>
               </a>
             </CardContent>
@@ -206,7 +206,7 @@ export default function ContactPage() {
                   </div>
                   <h3 className="text-xl font-semibold mb-2">Message Sent Successfully!</h3>
                   <p className="text-muted-foreground mb-4">
-                    Thank you for contacting NovaDrive Motors. Our team will review your message
+                    Thank you for contacting Samochody.be. Our team will review your message
                     and get back to you within 24 business hours.
                   </p>
                   <Button variant="outline" onClick={() => setIsSubmitted(false)}>

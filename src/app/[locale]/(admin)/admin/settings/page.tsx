@@ -24,11 +24,11 @@ export default function AdminSettingsPage() {
           <CardContent className="space-y-4">
             <div className="grid gap-2">
               <Label htmlFor="siteName">Site Name</Label>
-              <Input id="siteName" defaultValue="CarAuction" />
+              <Input id="siteName" defaultValue="Samochody.be" />
             </div>
             <div className="grid gap-2">
               <Label htmlFor="siteEmail">Contact Email</Label>
-              <Input id="siteEmail" type="email" defaultValue="info@carauction.pl" />
+              <Input id="siteEmail" type="email" defaultValue="info@samochody.be" />
             </div>
             <div className="grid gap-2">
               <Label htmlFor="sitePhone">Contact Phone</Label>

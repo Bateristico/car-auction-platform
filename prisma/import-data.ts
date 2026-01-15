@@ -182,7 +182,7 @@ async function main() {
 
   console.log("\nData import complete!")
   console.log("\nTest accounts:")
-  console.log("  Admin: admin@carauction.pl / admin123")
+  console.log("  Admin: admin@samochody.be / admin123")
   console.log("  User:  jan.kowalski@example.pl / user123")
 }
 

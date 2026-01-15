@@ -1,6 +1,6 @@
-# NovaDrive Motors - User Manual
+# Samochody.be - User Manual
 
-This manual provides step-by-step instructions for using the NovaDrive Motors vehicle auction platform. Follow these guides to learn how to bid on vehicles, manage auctions, and use the administrative features.
+This manual provides step-by-step instructions for using the Samochody.be vehicle auction platform. Follow these guides to learn how to bid on vehicles, manage auctions, and use the administrative features.
 
 ---
 
@@ -18,7 +18,7 @@ This manual provides step-by-step instructions for using the NovaDrive Motors ve
 
 ### Accessing the Platform
 
-Navigate to the NovaDrive Motors website to access the home page.
+Navigate to the Samochody.be website to access the home page.
 
 ![Home Page](img/01-home.png)
 
@@ -26,7 +26,7 @@ The home page displays:
 - **Hero Section**: Main call-to-action with "Browse Auctions" and "Create Account" buttons
 - **Statistics**: Live counts of active auctions, users, and bids
 - **Featured Auctions**: Vehicles ending soon
-- **Benefits Section**: Why choose NovaDrive Motors
+- **Benefits Section**: Why choose Samochody.be
 
 ### Creating an Account
 
@@ -186,7 +186,7 @@ Access your dashboard to track all your bidding activity.
 
 ### Understanding Sealed Bids
 
-NovaDrive Motors uses a **sealed-bid auction format**:
+Samochody.be uses a **sealed-bid auction format**:
 
 - Your bid amount is **private** - other bidders cannot see it
 - You can only see **your own** bid
@@ -540,11 +540,11 @@ Convert fetched vehicles into live auctions.
 ### Contact Support
 
 If you encounter issues:
-- **Email**: support@novadrivemotors.pl
+- **Email**: support@samochody.be
 - **Phone**: +48 22 123 45 67
 - **Hours**: Mon-Fri 8:00-18:00, Sat 9:00-14:00
 
 ---
 
 *Last updated: December 2024*
-*NovaDrive Motors Sp. z o.o.*
+*Samochody.be Sp. z o.o.*

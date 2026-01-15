@@ -1,7 +1,7 @@
 #!/bin/sh
 set -e
 
-echo "🚀 Starting NovaDrive Motors..."
+echo "🚀 Starting Samochody.be..."
 echo "📁 Working directory: $(pwd)"
 echo "📁 Data directory contents:"
 ls -la /app/data/ 2>/dev/null || echo "  (empty or doesn't exist)"

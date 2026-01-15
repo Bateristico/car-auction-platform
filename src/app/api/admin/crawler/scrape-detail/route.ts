@@ -8,11 +8,12 @@
 import { NextRequest, NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
-import { createIvoService } from "@/lib/crawler/ivo-service"
+import { createIvoService, IvoService } from "@/lib/crawler/ivo-service"
 import { parseAuctionDetail } from "@/lib/crawler/parser"
 import { crawlerLogger } from "@/lib/crawler/logger"
 import { crawlerConfig } from "@/lib/crawler/config"
 import { downloadAuctionImages } from "@/lib/crawler/image-downloader"
+import { CrawlerError, CrawlerErrorCode } from "@/lib/crawler/retry"
 
 const COST_PER_DETAIL = crawlerConfig.costs.detailViewCost
 
@@ -111,7 +112,13 @@ export async function POST(request: NextRequest) {
 
 /**
  * Background function to scrape auction details
- * This runs after the API response is sent
+ * This runs after the API response is sent.
+ *
+ * Features:
+ * - Automatic session refresh on expiration (silent retry)
+ * - Retry with exponential backoff for 5XX errors
+ * - Tracks failures with error reasons
+ * - Allows partial success (continues after individual failures)
  */
 async function scrapeDetails(
   jobId: string,
@@ -121,6 +128,7 @@ async function scrapeDetails(
   let successCount = 0
   let failedCount = 0
   let totalCost = 0
+  const failureReasons: Array<{ auctionId: string; error: string }> = []
 
   try {
     await ivoService.init()
@@ -132,6 +140,7 @@ async function scrapeDetails(
         )
 
         // Fetch detail (COSTS MONEY!)
+        // The IvoService now handles session refresh and retries internally
         const html = await ivoService.fetchAuctionDetail(
           auction.externalId,
           `Scrape job ${jobId}`
@@ -167,44 +176,100 @@ async function scrapeDetails(
           `Detail fetched for ${auction.externalId}. Running cost: ${totalCost.toFixed(2)} EUR`
         )
 
+        // Update job progress
+        await prisma.scrapeJob.update({
+          where: { id: jobId },
+          data: {
+            progress: successCount,
+            actualCost: totalCost,
+          },
+        })
+
         // Small delay between requests to be nice to the server
         await new Promise((resolve) => setTimeout(resolve, 1000))
       } catch (err) {
-        crawlerLogger.error(`Failed to fetch detail for ${auction.externalId}:`, err)
+        const errorMessage = err instanceof Error ? err.message : "Unknown error"
+        const errorCode = err instanceof CrawlerError ? err.code : "UNKNOWN"
 
-        // Mark as failed
+        crawlerLogger.error(
+          `Failed to fetch detail for ${auction.externalId} [${errorCode}]:`,
+          errorMessage
+        )
+
+        // Track the failure reason
+        failureReasons.push({
+          auctionId: auction.externalId,
+          error: `${errorCode}: ${errorMessage}`,
+        })
+
+        // Check if this is a fatal session error that we couldn't recover from
+        if (err instanceof CrawlerError && err.code === CrawlerErrorCode.SESSION_EXPIRED) {
+          crawlerLogger.warn(
+            `Session expired and could not be refreshed. Stopping job ${jobId} to prevent further failures.`
+          )
+
+          // Mark remaining auctions as ERROR status
+          const processedIds = auctions.slice(0, auctions.indexOf(auction) + 1).map(a => a.id)
+          const remainingIds = auctions.filter(a => !processedIds.includes(a.id)).map(a => a.id)
+
+          if (remainingIds.length > 0) {
+            await prisma.scrapedAuction.updateMany({
+              where: { id: { in: remainingIds } },
+              data: { selectionStatus: "ERROR" },
+            })
+          }
+
+          // Update current auction as error
+          await prisma.scrapedAuction.update({
+            where: { id: auction.id },
+            data: { selectionStatus: "ERROR" },
+          })
+
+          failedCount += remainingIds.length + 1
+          break // Stop processing more auctions
+        }
+
+        // Mark this auction as failed (can be retried)
         await prisma.scrapedAuction.update({
           where: { id: auction.id },
-          data: { selectionStatus: "SELECTED" }, // Reset to selected so it can be retried
+          data: { selectionStatus: "ERROR" },
         })
 
         failedCount++
+
+        // Continue with next auction for non-fatal errors
       }
     }
 
     // Update job with final stats
+    const jobStatus = failedCount === 0 ? "COMPLETED" : (successCount > 0 ? "COMPLETED" : "FAILED")
     await prisma.scrapeJob.update({
       where: { id: jobId },
       data: {
+        status: jobStatus,
         completedAt: new Date(),
         progress: successCount,
         actualCost: totalCost,
+        error: failureReasons.length > 0 ? JSON.stringify(failureReasons) : null,
       },
     })
 
     crawlerLogger.info(
-      `Scrape job ${jobId} completed. Success: ${successCount}, Failed: ${failedCount}, Total cost: ${totalCost.toFixed(2)} EUR`
+      `Scrape job ${jobId} ${jobStatus.toLowerCase()}. Success: ${successCount}, Failed: ${failedCount}, Total cost: ${totalCost.toFixed(2)} EUR`
     )
   } catch (error) {
-    crawlerLogger.error(`Scrape job ${jobId} failed:`, error)
+    const errorMessage = error instanceof Error ? error.message : "Unknown error"
+    crawlerLogger.error(`Scrape job ${jobId} failed catastrophically:`, errorMessage)
 
     // Update job as failed
     await prisma.scrapeJob.update({
       where: { id: jobId },
       data: {
+        status: "FAILED",
         completedAt: new Date(),
         progress: successCount,
         actualCost: totalCost,
+        error: errorMessage,
       },
     })
   } finally {

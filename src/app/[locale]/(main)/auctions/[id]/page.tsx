@@ -46,8 +46,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   }
 
   return {
-    title: `${auction.title} | Car Auction`,
-    description: `${auction.year} ${auction.make} ${auction.model} - ${auction.mileage.toLocaleString()} km. Bid now on CarAuction.`,
+    title: `${auction.title} | Samochody.be`,
+    description: `${auction.year} ${auction.make} ${auction.model} - ${auction.mileage.toLocaleString()} km. Bid now on Samochody.be.`,
     // Prevent search engines from indexing pages with VIN
     robots: {
       index: false,

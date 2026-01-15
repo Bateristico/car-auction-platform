@@ -1,5 +1,5 @@
 # ==============================================
-# NovaDrive Motors - Production Dockerfile
+# Samochody.be - Production Dockerfile
 # ==============================================
 # Multi-stage build for optimized production image
 

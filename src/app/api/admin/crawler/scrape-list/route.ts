@@ -13,6 +13,7 @@ import { createIvoService } from "@/lib/crawler/ivo-service"
 import { parseAuctionList } from "@/lib/crawler/parser"
 import { crawlerLogger } from "@/lib/crawler/logger"
 import { ParallelImageDownloader } from "@/lib/crawler/parallel-image-downloader"
+import { CrawlerError, CrawlerErrorCode } from "@/lib/crawler/retry"
 
 export async function POST(request: NextRequest) {
   try {
@@ -193,12 +194,42 @@ export async function POST(request: NextRequest) {
     }
   } catch (error) {
     crawlerLogger.error("List scrape failed:", error)
+
+    // Handle CrawlerError with specific codes
+    if (error instanceof CrawlerError) {
+      const statusMap: Record<string, number> = {
+        [CrawlerErrorCode.SESSION_EXPIRED]: 401,
+        [CrawlerErrorCode.SERVER_ERROR]: 503,
+        [CrawlerErrorCode.BROWSER_NOT_INSTALLED]: 503,
+        [CrawlerErrorCode.MAX_RETRIES_EXCEEDED]: 503,
+        [CrawlerErrorCode.NETWORK_ERROR]: 503,
+        [CrawlerErrorCode.SCRAPE_FAILED]: 500,
+      }
+
+      return NextResponse.json(
+        {
+          error: error.message,
+          code: error.code,
+          retryable: error.retryable,
+          retryAfterMs: error.retryAfterMs,
+        },
+        { status: statusMap[error.code] || 500 }
+      )
+    }
+
+    // Handle generic errors
+    const errorMessage = error instanceof Error ? error.message : "Unknown error"
+    const isBrowserUnavailable = errorMessage.includes("Crawler feature unavailable") ||
+                                  errorMessage.includes("Playwright browser is not installed")
+
     return NextResponse.json(
       {
-        error: "Failed to scrape auction list",
-        message: error instanceof Error ? error.message : "Unknown error"
+        error: isBrowserUnavailable ? "Crawler unavailable" : "Failed to scrape auction list",
+        message: errorMessage,
+        code: isBrowserUnavailable ? CrawlerErrorCode.BROWSER_NOT_INSTALLED : CrawlerErrorCode.SCRAPE_FAILED,
+        retryable: !isBrowserUnavailable,
       },
-      { status: 500 }
+      { status: isBrowserUnavailable ? 503 : 500 }
     )
   }
 }

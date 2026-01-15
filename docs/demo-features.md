@@ -1,6 +1,6 @@
-# NovaDrive Motors - Platform Features Guide
+# Samochody.be - Platform Features Guide
 
-Welcome to NovaDrive Motors, Poland's premier online vehicle auction platform. This guide explains all the features available on our platform and how to make the most of your experience.
+Welcome to Samochody.be, Poland's premier online vehicle auction platform. This guide explains all the features available on our platform and how to make the most of your experience.
 
 ---
 
@@ -17,9 +17,9 @@ Welcome to NovaDrive Motors, Poland's premier online vehicle auction platform. T
 
 ## Introduction
 
-### About NovaDrive Motors
+### About Samochody.be
 
-NovaDrive Motors is an online vehicle auction platform that connects buyers with quality vehicles from trusted sources across Europe. Since our founding in 2019, we've helped thousands of customers find their perfect vehicle at competitive auction prices.
+Samochody.be is an online vehicle auction platform that connects buyers with quality vehicles from trusted sources across Europe. Since our founding in 2019, we've helped thousands of customers find their perfect vehicle at competitive auction prices.
 
 ### What We Offer
 
@@ -42,7 +42,7 @@ NovaDrive Motors is an online vehicle auction platform that connects buyers with
 
 ### Home Page
 
-When you visit NovaDrive Motors, you'll see:
+When you visit Samochody.be, you'll see:
 
 - **Live Platform Statistics**: See how many active auctions are available, total registered users, and bids placed
 - **Featured Auctions**: A selection of auctions ending soon so you don't miss out
@@ -212,7 +212,7 @@ You can also register instantly using your Google account.
 
 ### How Our Auctions Work
 
-NovaDrive Motors uses a **sealed-bid auction** format:
+Samochody.be uses a **sealed-bid auction** format:
 
 1. **Browse**: Find vehicles that interest you
 2. **Research**: Review all photos, specifications, and condition reports
@@ -420,14 +420,14 @@ Configure system-wide options:
 
 ### About Page
 
-Learn more about NovaDrive Motors:
+Learn more about Samochody.be:
 - Our founding story and mission
 - Company values and commitments
 - Leadership team information
 - Business address and registration details
 
 **Company Information:**
-- Full legal name: NovaDrive Motors Sp. z o.o.
+- Full legal name: Samochody.be Sp. z o.o.
 - Founded: 2019
 - Headquarters: Warsaw, Poland
 - Founder & CEO: Rafal Noga
@@ -435,10 +435,10 @@ Learn more about NovaDrive Motors:
 ### Contact Options
 
 **Get in Touch:**
-- **General Inquiries**: info@novadrivemotors.pl
-- **Customer Support**: support@novadrivemotors.pl
-- **Sales Team**: sales@novadrivemotors.pl
-- **Legal Department**: legal@novadrivemotors.pl
+- **General Inquiries**: info@samochody.be
+- **Customer Support**: support@samochody.be
+- **Sales Team**: sales@samochody.be
+- **Legal Department**: legal@samochody.be
 - **Phone**: +48 22 123 45 67
 
 **Business Hours:**
@@ -448,7 +448,7 @@ Learn more about NovaDrive Motors:
 
 **Address:**
 ```
-NovaDrive Motors Sp. z o.o.
+Samochody.be Sp. z o.o.
 ul. Motoryzacyjna 42
 02-495 Warsaw
 Poland
@@ -489,12 +489,12 @@ If you have questions not covered in this guide:
 
 - **Check our Rules page** for detailed auction guidelines
 - **Use the Contact form** for personalized assistance
-- **Email support** at support@novadrivemotors.pl
+- **Email support** at support@samochody.be
 - **Call us** at +48 22 123 45 67 during business hours
 
-Thank you for choosing NovaDrive Motors. Happy bidding!
+Thank you for choosing Samochody.be. Happy bidding!
 
 ---
 
 *Last updated: December 2024*
-*NovaDrive Motors Sp. z o.o. - All rights reserved*
+*Samochody.be Sp. z o.o. - All rights reserved*

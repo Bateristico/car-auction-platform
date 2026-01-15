@@ -18,7 +18,7 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
   const t = await getTranslations({ locale, namespace: "rules" })
 
   return {
-    title: `${t("title")} | CarAuction`,
+    title: `${t("title")} | Samochody.be`,
     description: t("subtitle"),
   }
 }
@@ -173,7 +173,7 @@ export default async function RulesPage({
               </li>
               <li className="flex items-start gap-2">
                 <CheckCircle className="h-4 w-4 text-green-600 mt-1 flex-shrink-0" />
-                <span>NovaDrive Motors reserves the right to extend or cancel auctions</span>
+                <span>Samochody.be reserves the right to extend or cancel auctions</span>
               </li>
             </ul>
           </CardContent>
@@ -279,7 +279,7 @@ export default async function RulesPage({
             </ul>
             <div className="bg-muted p-4 rounded-lg">
               <p className="text-sm">
-                <strong>Note:</strong> While we strive for accuracy, NovaDrive Motors is not responsible for
+                <strong>Note:</strong> While we strive for accuracy, Samochody.be is not responsible for
                 undisclosed defects or conditions not visible during standard inspection.
               </p>
             </div>
@@ -296,7 +296,7 @@ export default async function RulesPage({
           </CardHeader>
           <CardContent className="space-y-4">
             <p className="text-muted-foreground">
-              NovaDrive Motors offers buyer protection for eligible purchases:
+              Samochody.be offers buyer protection for eligible purchases:
             </p>
             <ul className="space-y-2">
               <li className="flex items-start gap-2">
@@ -360,13 +360,13 @@ export default async function RulesPage({
       {/* Footer Note */}
       <div className="mt-12 text-center text-sm text-muted-foreground">
         <p>
-          These rules were last updated on January 1, 2025. NovaDrive Motors reserves the right
+          These rules were last updated on January 1, 2025. Samochody.be reserves the right
           to modify these rules at any time. Users will be notified of significant changes.
         </p>
         <p className="mt-2">
           For questions about these rules, please contact our support team at{" "}
-          <a href="mailto:support@novadrivemotors.pl" className="text-primary hover:underline">
-            support@novadrivemotors.pl
+          <a href="mailto:support@samochody.be" className="text-primary hover:underline">
+            support@samochody.be
           </a>
         </p>
       </div>

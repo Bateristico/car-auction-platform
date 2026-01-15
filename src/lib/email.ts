@@ -14,8 +14,8 @@ function getResendClient(): Resend {
   return resendClient
 }
 
-const NOTIFICATION_EMAIL = process.env.NOTIFICATION_EMAIL || "notifications@novadrivemotors.pl"
-const FROM_EMAIL = process.env.FROM_EMAIL || "NovaDrive Motors <onboarding@resend.dev>"
+const NOTIFICATION_EMAIL = process.env.NOTIFICATION_EMAIL || "notifications@samochody.be"
+const FROM_EMAIL = process.env.FROM_EMAIL || "Samochody.be <onboarding@resend.dev>"
 
 interface BidNotificationParams {
   bidAmount: number
@@ -85,7 +85,7 @@ export async function sendBidNotification({
         </div>
 
         <p style="color: #6b7280; font-size: 12px; margin-top: 20px; text-align: center;">
-          This is an automated notification from CarAuction.
+          This is an automated notification from Samochody.be.
           <br>Time: ${new Date().toLocaleString()}
         </p>
       </div>
@@ -119,7 +119,7 @@ export async function sendVerificationEmail(email: string, token: string) {
   const baseUrl = process.env.NEXTAUTH_URL || "http://localhost:3000"
   const verifyUrl = `${baseUrl}/verify-email?token=${token}`
 
-  const subject = "Verify your email - CarAuction"
+  const subject = "Verify your email - Samochody.be"
 
   const html = `
     <!DOCTYPE html>
@@ -130,7 +130,7 @@ export async function sendVerificationEmail(email: string, token: string) {
     </head>
     <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
       <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; border-radius: 10px 10px 0 0; text-align: center;">
-        <h1 style="color: white; margin: 0;">Welcome to CarAuction!</h1>
+        <h1 style="color: white; margin: 0;">Welcome to Samochody.be!</h1>
       </div>
 
       <div style="background: #f9fafb; padding: 30px; border: 1px solid #e5e7eb; border-top: none; border-radius: 0 0 10px 10px;">

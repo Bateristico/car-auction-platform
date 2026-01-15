@@ -1,13 +1,27 @@
 import { NextIntlClientProvider, hasLocale } from "next-intl"
 import { getMessages, setRequestLocale } from "next-intl/server"
 import { notFound } from "next/navigation"
-import { Inter } from "next/font/google"
+import { Inter, Montserrat, JetBrains_Mono } from "next/font/google"
 import { routing } from "@/i18n/routing"
 import { Providers } from "@/components/providers"
 
+// Body text font
 const inter = Inter({
   subsets: ["latin"],
-  variable: "--font-sans",
+  variable: "--font-body",
+})
+
+// Display/headline font
+const montserrat = Montserrat({
+  subsets: ["latin"],
+  variable: "--font-display",
+  weight: ["500", "600", "700", "800"],
+})
+
+// Monospace font for timers and numbers
+const jetbrainsMono = JetBrains_Mono({
+  subsets: ["latin"],
+  variable: "--font-mono",
 })
 
 type Props = {
@@ -32,7 +46,7 @@ export default async function LocaleLayout({ children, params }: Props) {
 
   return (
     <html lang={locale} suppressHydrationWarning>
-      <body className={`${inter.variable} font-sans antialiased`}>
+      <body className={`${inter.variable} ${montserrat.variable} ${jetbrainsMono.variable} font-sans antialiased`}>
         <Providers>
           <NextIntlClientProvider messages={messages}>
             {children}

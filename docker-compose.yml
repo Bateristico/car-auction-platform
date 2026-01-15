@@ -1,5 +1,5 @@
 # ==============================================
-# NovaDrive Motors - Docker Compose Configuration
+# Samochody.be - Docker Compose Configuration
 # ==============================================
 # For local development and testing
 
@@ -10,7 +10,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: novadrive-motors
+    container_name: samochody-be
     ports:
       - "3000:3000"
     environment:
@@ -37,7 +37,7 @@ services:
       context: .
       dockerfile: Dockerfile
       target: builder
-    container_name: novadrive-dev
+    container_name: samochody-be-dev
     ports:
       - "3000:3000"
     environment:
