@@ -32,8 +32,10 @@ ENV NODE_ENV=production
 # Generate Prisma client
 RUN npx prisma generate
 
-# Install Playwright Chromium browser (for crawler feature)
-RUN npx playwright install chromium --with-deps
+# Install only Playwright Chromium Headless Shell (smaller, sufficient for crawler)
+# Skip full browser and FFMPEG to reduce image size by ~170MB
+ENV PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1
+RUN npx playwright install chromium-headless-shell --with-deps
 
 # Create empty database for build (Next.js static generation needs it)
 # Use --url flag to override any environment variable from build platform
