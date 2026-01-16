@@ -53,14 +53,20 @@ export interface AuctionImageResult {
 export class ParallelImageDownloader {
   private browser: Browser
   private authStatePath: string
-  private outputDir: string
   private concurrency: number
 
   constructor(browser: Browser) {
     this.browser = browser
     this.authStatePath = crawlerConfig.paths.ivoAuthState
-    this.outputDir = path.join(process.cwd(), crawlerConfig.imageDownload.outputDir)
     this.concurrency = crawlerConfig.imageDownload.concurrency
+  }
+
+  /**
+   * Get output directory path lazily to avoid Turbopack static analysis
+   * Using a method instead of a property prevents build-time file pattern matching
+   */
+  private getOutputDir(): string {
+    return path.join(process.cwd(), crawlerConfig.imageDownload.outputDir)
   }
 
   /**
@@ -183,7 +189,7 @@ export class ParallelImageDownloader {
     const { absoluteMaxImages, consecutivePlaceholdersToStop } = crawlerConfig.imageDownload
 
     // Ensure output directory exists
-    const auctionDir = path.join(this.outputDir, auctionId)
+    const auctionDir = path.join(this.getOutputDir(), auctionId)
     fs.mkdirSync(auctionDir, { recursive: true })
 
     while (

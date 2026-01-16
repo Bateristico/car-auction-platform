@@ -22,8 +22,11 @@ interface CookieState {
   savedAt: string
 }
 
-// Base path for storing auction images
-const IMAGES_BASE_PATH = path.join(process.cwd(), "public", "auction-images")
+// Base path for storing auction images - computed lazily to avoid Turbopack static analysis
+// Using a function instead of a constant prevents build-time file pattern matching
+function getImagesBasePath(): string {
+  return path.join(process.cwd(), "public", "auction-images")
+}
 
 /**
  * Load IVO cookies for authenticated image fetching
@@ -66,7 +69,7 @@ function loadIvoCookies(): string {
  * Ensure the auction images directory exists
  */
 function ensureAuctionDir(auctionId: string): string {
-  const auctionDir = path.join(IMAGES_BASE_PATH, auctionId)
+  const auctionDir = path.join(getImagesBasePath(), auctionId)
 
   if (!fs.existsSync(auctionDir)) {
     fs.mkdirSync(auctionDir, { recursive: true })
@@ -196,7 +199,7 @@ export async function downloadAuctionImages(
  * Check if images already exist locally for an auction
  */
 export function hasLocalImages(auctionId: string): boolean {
-  const auctionDir = path.join(IMAGES_BASE_PATH, auctionId)
+  const auctionDir = path.join(getImagesBasePath(), auctionId)
 
   if (!fs.existsSync(auctionDir)) {
     return false
@@ -210,7 +213,7 @@ export function hasLocalImages(auctionId: string): boolean {
  * Get existing local image paths for an auction
  */
 export function getLocalImagePaths(auctionId: string): string[] {
-  const auctionDir = path.join(IMAGES_BASE_PATH, auctionId)
+  const auctionDir = path.join(getImagesBasePath(), auctionId)
 
   if (!fs.existsSync(auctionDir)) {
     return []
@@ -232,7 +235,7 @@ export function getLocalImagePaths(auctionId: string): string[] {
  * Delete local images for an auction
  */
 export function deleteLocalImages(auctionId: string): void {
-  const auctionDir = path.join(IMAGES_BASE_PATH, auctionId)
+  const auctionDir = path.join(getImagesBasePath(), auctionId)
 
   if (fs.existsSync(auctionDir)) {
     fs.rmSync(auctionDir, { recursive: true, force: true })

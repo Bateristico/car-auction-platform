@@ -59,6 +59,10 @@ docker-compose*
 # DigitalOcean
 .do/
 
+# Auction images (runtime data, not needed for build)
+# These images are downloaded by the crawler at runtime
+public/auction-images/
+
 # Misc
 *.pem
 *.log

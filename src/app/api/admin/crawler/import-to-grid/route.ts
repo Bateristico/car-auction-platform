@@ -62,11 +62,19 @@ function generateMockPrice(year: number | null, mileage: number | null, brand: s
 }
 
 /**
+ * Get images base directory path lazily to avoid Turbopack static analysis
+ * Using a function instead of a constant prevents build-time file pattern matching
+ */
+function getImagesBasePath(): string {
+  return path.join(process.cwd(), "public", "auction-images")
+}
+
+/**
  * Migrate image folder from external ID to internal auction ID
  * This removes the informex auction ID from public image URLs
  */
 function migrateImageFolder(externalId: string, internalId: string): string | null {
-  const imagesBaseDir = path.join(process.cwd(), "public", "auction-images")
+  const imagesBaseDir = getImagesBasePath()
   const sourceDir = path.join(imagesBaseDir, externalId)
   const targetDir = path.join(imagesBaseDir, internalId)
 
